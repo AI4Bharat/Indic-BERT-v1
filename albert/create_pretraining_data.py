@@ -393,16 +393,14 @@ MaskedLmInstance = collections.namedtuple("MaskedLmInstance",
 
 def _is_start_piece_sp(piece):
   """Check if the current word piece is the starting piece (sentence piece)."""
-  special_pieces = set(list('!"#$%&\"()*+,-./:;?@[\\]^_`{|}~'))
+  special_pieces = set(list('!"#$%&\"()*+,-./:;?@[\\]^_`{|}~₹'))
   special_pieces.add(u"€".encode("utf-8"))
   special_pieces.add(u"£".encode("utf-8"))
   # Note(mingdachen):
   # For foreign characters, we always treat them as a whole piece.
   english_chars = set(list("abcdefghijklmnopqrstuvwxyz"))
   if (six.ensure_str(piece).startswith("▁") or
-      six.ensure_str(piece).startswith("<") or piece in special_pieces or
-      not all([i.lower() in english_chars.union(special_pieces)
-               for i in piece])):
+      six.ensure_str(piece).startswith("<") or piece in special_pieces):
     return True
   else:
     return False
