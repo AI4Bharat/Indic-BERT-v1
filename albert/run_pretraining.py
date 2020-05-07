@@ -171,11 +171,11 @@ def model_fn_builder(albert_config, init_checkpoint, learning_rate,
                                                  masked_lm_ids,
                                                  masked_lm_weights)
 
-    (sentence_order_loss, sentence_order_example_loss,
-     sentence_order_log_probs) = get_sentence_order_output(
-         albert_config, model.get_pooled_output(), sentence_order_labels)
+    # (sentence_order_loss, sentence_order_example_loss,
+    #  sentence_order_log_probs) = get_sentence_order_output(
+    #      albert_config, model.get_pooled_output(), sentence_order_labels)
 
-    total_loss = masked_lm_loss + sentence_order_loss
+    total_loss = masked_lm_loss # + sentence_order_loss
 
     tvars = tf.trainable_variables()
 
