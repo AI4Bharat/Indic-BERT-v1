@@ -1,6 +1,11 @@
 ALBERT
 ======
 
+*************** Changes from Original Implementation ***************
+
+1. Remove sentence order in `run_pretraining.py`
+2. Modify `_is_start_piece_sp` function in `create_pretraining_data.py` to account for non-English languages.
+
 ***************New March 28, 2020 ***************
 
 Add a colab [tutorial](https://github.com/google-research/albert/blob/master/albert_glue_fine_tuning_tutorial.ipynb) to run fine-tuning for GLUE datasets.
