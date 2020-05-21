@@ -8,6 +8,8 @@ from typing import List, Optional, Union
 
 from transformers.data.processors.utils import DataProcessor
 from transformers.data.processors.utils import InputExample, InputFeatures
+from transformers import glue_compute_metrics as compute_metrics
+from transformers import glue_convert_examples_to_features as convert_examples_to_features
 
 
 def read_csv(input_file):

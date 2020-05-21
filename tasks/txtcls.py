@@ -12,16 +12,17 @@ import glob
 import logging
 import os
 import time
+
 import numpy as np
 import torch
-
-from .lightning_base import BaseTransformer, add_generic_args, generic_train
 from torch.utils.data import DataLoader, TensorDataset
-from .data import iglue_compute_metrics as compute_metrics
-from .data transformers import iglue_convert_examples_to_features as convert_examples_to_features
-from .data import iglue_output_modes
-from .data import iglue_processors as processors
-from .data import iglue_tasks_num_labels
+
+from lightning_base import BaseTransformer, add_generic_args, generic_train
+
+from iglue import compute_metrics
+from iglue import convert_examples_to_features 
+from iglue import iglue_output_modes
+from iglue import iglue_processors as processors
 
 
 logger = logging.getLogger(__name__)
@@ -33,7 +34,7 @@ class GLUETransformer(BaseTransformer):
 
     def __init__(self, hparams):
         hparams.glue_output_mode = glue_output_modes[hparams.task]
-        num_labels = glue_tasks_num_labels[hparams.task]
+        num_labels = len(processors[args.task]().get_labels(args.data_dir))
 
         super().__init__(hparams, num_labels, self.mode)
 
@@ -56,7 +57,7 @@ class GLUETransformer(BaseTransformer):
         "Called to initialize data. Use the call to construct features"
         args = self.hparams
         processor = processors[args.task]()
-        self.labels = processor.get_labels()
+        self.labels = processor.get_labels(args.data_dir)
 
         for mode in ["train", "dev"]:
             cached_features_file = self._feature_file(mode)
