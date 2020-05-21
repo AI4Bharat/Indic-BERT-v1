@@ -101,7 +101,6 @@ class GLUETransformer(BaseTransformer):
         return DataLoader(
             TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels),
             batch_size=batch_size,
-            shuffle=True,
         )
 
     def validation_step(self, batch, batch_idx):
