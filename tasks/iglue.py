@@ -23,7 +23,7 @@ class AGCProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir):
         """See base class."""
-        return self._create_examples(read_csv(os.path.join(data_dir, "kn-train.csv")), "train")
+        return self._create_examples(read_csv(os.path.join(data_dir, "kn-valid.csv")), "train")
 
     def get_dev_examples(self, data_dir):
         """See base class."""

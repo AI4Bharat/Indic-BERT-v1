@@ -261,6 +261,7 @@ def generic_train(model: BaseTransformer, args: argparse.Namespace):
         gradient_clip_val=args.max_grad_norm,
         checkpoint_callback=checkpoint_callback,
         callbacks=[LoggingCallback()],
+        verbose=True
     )
 
     if args.fp16:

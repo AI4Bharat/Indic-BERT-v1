@@ -33,7 +33,7 @@ class GLUETransformer(BaseTransformer):
     mode = "sequence-classification"
 
     def __init__(self, hparams):
-        hparams.glue_output_mode = glue_output_modes[hparams.task]
+        hparams.iglue_output_mode = iglue_output_modes[hparams.task]
         num_labels = len(processors[args.task]().get_labels(args.data_dir))
 
         super().__init__(hparams, num_labels, self.mode)
@@ -76,7 +76,7 @@ class GLUETransformer(BaseTransformer):
                     self.tokenizer,
                     max_length=args.max_seq_length,
                     label_list=self.labels,
-                    output_mode=args.glue_output_mode,
+                    output_mode=args.iglue_output_mode,
                 )
                 logger.info("Saving features into cached file %s", cached_features_file)
                 torch.save(features, cached_features_file)
@@ -93,9 +93,9 @@ class GLUETransformer(BaseTransformer):
         all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
         all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
         all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
-        if self.hparams.glue_output_mode == "classification":
+        if self.hparams.iglue_output_mode == "classification":
             all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
-        elif self.hparams.glue_output_mode == "regression":
+        elif self.hparams.iglue_output_mode == "regression":
             all_labels = torch.tensor([f.label for f in features], dtype=torch.float)
 
         return DataLoader(
@@ -121,9 +121,9 @@ class GLUETransformer(BaseTransformer):
         val_loss_mean = torch.stack([x["val_loss"] for x in outputs]).mean().detach().cpu().item()
         preds = np.concatenate([x["pred"] for x in outputs], axis=0)
 
-        if self.hparams.glue_output_mode == "classification":
+        if self.hparams.iglue_output_mode == "classification":
             preds = np.argmax(preds, axis=1)
-        elif self.hparams.glue_output_mode == "regression":
+        elif self.hparams.iglue_output_mode == "regression":
             preds = np.squeeze(preds)
 
         out_label_ids = np.concatenate([x["target"] for x in outputs], axis=0)
