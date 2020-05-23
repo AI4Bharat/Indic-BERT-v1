@@ -27,5 +27,5 @@ python3 tasks/txtcls.py --data_dir $DATA_DIR \
 --train_batch_size $BATCH_SIZE \
 --seed $SEED \
 --do_train \
---do_predict \
---n_tpu_cores 8
+--do_predict
+# --n_tpu_cores 8
