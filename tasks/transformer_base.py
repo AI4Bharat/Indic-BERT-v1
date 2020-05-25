@@ -12,7 +12,6 @@ import pytorch_lightning as pl
 import torch
 import torch_xla.core.xla_model as xm
 
-
 from transformers import (
     AdamW,
     AutoConfig,
@@ -25,6 +24,8 @@ from transformers import (
     AutoTokenizer,
     get_linear_schedule_with_warmup,
 )
+
+from .utils import loader_from_features
 
 
 logger = logging.getLogger(__name__)
@@ -85,7 +86,8 @@ def set_seed(args: argparse.Namespace):
 class LightningBase(BaseTransformer, pl.LightningModule):
     """
     Represents the combination of a transformer model and a dataset
-    The data can be have any of the following components: train, dev or test
+    The data can have any of the following components: train, dev or test
+    This class is used for running models on TPUs
     """
 
     def __init__(self, hparams: argparse.Namespace, num_labels=None, mode="base"):
@@ -131,12 +133,23 @@ class LightningBase(BaseTransformer, pl.LightningModule):
         tqdm_dict = {"loss": "{:.3f}".format(avg_loss), "lr": self.lr_scheduler.get_last_lr()[-1]}
         return tqdm_dict
 
+    def training_step(self, batch, batch_idx):
+        inputs = {"input_ids": batch[0], "token_type_ids": batch[2],
+                  "attention_mask": batch[1], "labels": batch[3]}
+
+        outputs = self(**inputs)
+        loss = outputs[0]
+
+        tensorboard_logs = {"loss": loss, "rate": self.lr_scheduler.get_last_lr()[-1]}
+        return {"loss": loss, "log": tensorboard_logs}
+
     def test_step(self, batch, batch_nb):
         return self.validation_step(batch, batch_nb)
 
     def train_dataloader(self):
         train_batch_size = self.hparams.train_batch_size
-        dataloader = self.load_dataset("train", train_batch_size)
+        features = self.load_features("train")
+        dataloader = loader_from_features(features, self.output_mode, train_batch_size)
 
         t_total = (
             (len(dataloader.dataset) // (train_batch_size * max(1, self.hparams.n_gpu)))
@@ -150,20 +163,12 @@ class LightningBase(BaseTransformer, pl.LightningModule):
         return dataloader
 
     def val_dataloader(self):
-        return self.load_dataset("dev", self.hparams.eval_batch_size)
+        return loader_from_features(self.load_features("dev"),
+                                    self.output_mode, self.hparams.eval_batch_size)
 
     def test_dataloader(self):
-        return self.load_dataset("test", self.hparams.eval_batch_size)
-
-    def _feature_file(self, mode):
-        return os.path.join(
-            self.hparams.data_dir,
-            "cached_{}_{}_{}".format(
-                mode,
-                list(filter(None, self.hparams.model_name_or_path.split("/"))).pop(),
-                str(self.hparams.max_seq_length),
-            ),
-        )
+        return loader_from_features(self.load_features("test"),
+                                    self.output_mode, self.hparams.eval_batch_size)
 
     @staticmethod
     def add_model_specific_args(parser, root_dir):
@@ -201,6 +206,15 @@ class LightningBase(BaseTransformer, pl.LightningModule):
         parser.add_argument("--eval_batch_size", default=32, type=int)
 
 
+# Fixes __temp_weight_ddp_end.ckpt bug
+# See https://github.com/PyTorchLightning/pytorch-lightning/issues/1142
+class MonkeyPatchedTrainer(pl.Trainer):
+    def load_spawn_weights(self, original_model):
+        pass
+
+pl.Trainer = MonkeyPatchedTrainer
+
+
 class LoggingCallback(pl.Callback):
     def on_validation_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         logger.info("***** Validation results *****")
@@ -226,54 +240,7 @@ class LoggingCallback(pl.Callback):
                         writer.write("{} = {}\n".format(key, str(metrics[key])))
 
 
-def add_generic_args(parser, root_dir):
-    parser.add_argument(
-        "--output_dir",
-        default=None,
-        type=str,
-        required=True,
-        help="The output directory where the model predictions and checkpoints will be written.",
-    )
-
-    parser.add_argument(
-        "--fp16",
-        action="store_true",
-        help="Whether to use 16-bit (mixed) precision (through NVIDIA apex) instead of 32-bit",
-    )
-
-    parser.add_argument(
-        "--fp16_opt_level",
-        type=str,
-        default="O1",
-        help="For fp16: Apex AMP optimization level selected in ['O0', 'O1', 'O2', and 'O3']."
-        "See details at https://nvidia.github.io/apex/amp.html",
-    )
-
-    parser.add_argument("--n_gpu", type=int, default=1)
-    parser.add_argument("--n_tpu_cores", type=int, default=0)
-    parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max gradient norm.")
-    parser.add_argument("--do_train", action="store_true", help="Whether to run training.")
-    parser.add_argument("--do_predict", action="store_true", help="Whether to run predictions on the test set.")
-    parser.add_argument(
-        "--gradient_accumulation_steps",
-        type=int,
-        default=1,
-        help="Number of updates steps to accumulate before performing a backward/update pass.",
-    )
-
-    parser.add_argument("--seed", type=int, default=42, help="random seed for initialization")
-
-
-# Fixes __temp_weight_ddp_end.ckpt bug
-# See https://github.com/PyTorchLightning/pytorch-lightning/issues/1142
-class MonkeyPatchedTrainer(pl.Trainer):
-    def load_spawn_weights(self, original_model):
-        pass
-
-pl.Trainer = MonkeyPatchedTrainer
-
-
-def generic_train(model: BaseTransformer, args: argparse.Namespace):
+def create_trainer(model: BaseTransformer, args: argparse.Namespace):
     # init model
     set_seed(args)
 
@@ -307,8 +274,4 @@ def generic_train(model: BaseTransformer, args: argparse.Namespace):
         train_params["distributed_backend"] = "ddp"
 
     trainer = pl.Trainer(**train_params)
-
-    if args.do_train:
-        trainer.fit(model)
-
     return trainer
