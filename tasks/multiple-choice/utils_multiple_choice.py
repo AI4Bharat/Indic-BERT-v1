@@ -256,12 +256,12 @@ class HPProcessor(DataProcessor):
     def get_train_examples(self, data_dir):
         """See base class."""
         logger.info("LOOKING AT {} train".format(data_dir))
-        return self._create_examples(self._read_json(os.path.join(data_dir, "train.csv")), "train")
+        return self._create_examples(self._read_json(os.path.join(data_dir, "kn/kn-train.csv")), "train")
 
     def get_dev_examples(self, data_dir):
         """See base class."""
         logger.info("LOOKING AT {} dev".format(data_dir))
-        return self._create_examples(self._read_json(os.path.join(data_dir, "val.csv")), "dev")
+        return self._create_examples(self._read_json(os.path.join(data_dir, "kn/kn-valid.csv")), "dev")
 
     def get_test_examples(self, data_dir):
         """See base class."""
@@ -270,7 +270,7 @@ class HPProcessor(DataProcessor):
             "For swag testing, the input file does not contain a label column. It can not be tested in current code"
             "setting!"
         )
-        return self._create_examples(self._read_json(os.path.join(data_dir, "test.csv")), "test")
+        return self._create_examples(self._read_json(os.path.join(data_dir, "kn/kn-test.csv")), "test")
 
     def get_labels(self):
         """See base class."""
@@ -284,10 +284,12 @@ class HPProcessor(DataProcessor):
         with open(input_file, "r", encoding="utf-8") as f:
             return list(json.load(f))
 
-    def _create_examples(self, lines: List[Dict[str]], type: str):
+    def _create_examples(self, lines: List[Dict[str, str]], type: str):
         """Creates examples for the training and dev sets."""
         if type == "train" and lines[0][-1] != "label":
             raise ValueError("For training, the input file must contain a label column.")
+
+        print(lines)
 
         examples = [
             InputExample(
@@ -376,5 +378,5 @@ def convert_examples_to_features(
     return features
 
 
-processors = {"hp": HPProcessor, "race": RaceProcessor, "swag": SwagProcessor, "arc": ArcProcessor, "syn": SynonymProcessor}
-MULTIPLE_CHOICE_TASKS_NUM_LABELS = {"hp": 4, "race", 4, "swag", 4, "arc", 4, "syn", 5}
+processors = {"hp": HPProcessor}
+MULTIPLE_CHOICE_TASKS_NUM_LABELS = {"hp": 4, "race": 4, "swag": 4, "arc": 4, "syn": 5}

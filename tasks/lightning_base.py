@@ -11,6 +11,8 @@ import random
 import numpy as np
 import pytorch_lightning as pl
 import torch
+import torch_xla.core.xla_model as xm
+
 
 from transformers import (
     AdamW,
@@ -27,6 +29,15 @@ from transformers import (
 
 
 logger = logging.getLogger(__name__)
+
+
+# Fixes __temp_weight_ddp_end.ckpt bug
+# See https://github.com/PyTorchLightning/pytorch-lightning/issues/1142
+class MonkeyPatchedTrainer(pl.Trainer):
+    def load_spawn_weights(self, original_model):
+        pass
+
+pl.Trainer = MonkeyPatchedTrainer
 
 
 MODEL_MODES = {
@@ -110,7 +121,7 @@ class BaseTransformer(pl.LightningModule):
         return self.validation_step(batch, batch_nb)
 
     # def test_end(self, outputs):
-    #     return self.validation_end(outputs)
+    #    return self.validation_end(outputs)
 
     def train_dataloader(self):
         train_batch_size = self.hparams.train_batch_size
@@ -269,9 +280,6 @@ def generic_train(model: BaseTransformer, args: argparse.Namespace):
         train_params["amp_level"] = args.fp16_opt_level
 
     if args.n_tpu_cores > 0:
-        global xm
-        import torch_xla.core.xla_model as xm
-
         train_params["num_tpu_cores"] = args.n_tpu_cores
         train_params["gpus"] = 0
 

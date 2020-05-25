@@ -34,7 +34,7 @@ class GLUETransformer(BaseTransformer):
 
     def __init__(self, hparams):
         hparams.iglue_output_mode = iglue_output_modes[hparams.task]
-        num_labels = len(processors[args.task]().get_labels(args.data_dir))
+        num_labels = len(processors[args.task](hparams.lang).get_labels(hparams.data_dir))
 
         super().__init__(hparams, num_labels, self.mode)
 
@@ -45,7 +45,7 @@ class GLUETransformer(BaseTransformer):
         inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
 
         if self.config.model_type != "distilbert":
-            inputs["token_type_ids"] = batch[2] if self.config.model_type in ["bert", "xlnet", "albert"] else None
+           inputs["token_type_ids"] = batch[2] if self.config.model_type in ["bert", "xlnet", "albert"] else None
 
         outputs = self(**inputs)
         loss = outputs[0]
@@ -56,7 +56,7 @@ class GLUETransformer(BaseTransformer):
     def prepare_data(self):
         "Called to initialize data. Use the call to construct features"
         args = self.hparams
-        processor = processors[args.task]()
+        processor = processors[args.task](args.lang)
         self.labels = processor.get_labels(args.data_dir)
 
         for mode in ["train", "dev"]:
@@ -92,7 +92,7 @@ class GLUETransformer(BaseTransformer):
         features = torch.load(cached_features_file)
         all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
         all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
-        all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
+        all_token_type_ids = torch.tensor([f.token_type_ids or 0 for f in features], dtype=torch.long)
         if self.hparams.iglue_output_mode == "classification":
             all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
         elif self.hparams.iglue_output_mode == "regression":
@@ -107,7 +107,7 @@ class GLUETransformer(BaseTransformer):
         inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
 
         if self.config.model_type != "distilbert":
-            inputs["token_type_ids"] = batch[2] if self.config.model_type in ["bert", "xlnet", "albert"] else None
+           inputs["token_type_ids"] = batch[2] if self.config.model_type in ["bert", "xlnet", "albert"] else None
 
         outputs = self(**inputs)
         tmp_eval_loss, logits = outputs[:2]
@@ -176,6 +176,14 @@ class GLUETransformer(BaseTransformer):
         )
 
         parser.add_argument(
+            "--lang",
+            default=None,
+            type=str,
+            required=True,
+            help="The language we are dealing with",
+        )
+
+        parser.add_argument(
             "--overwrite_cache", action="store_true", help="Overwrite the cached training and evaluation sets"
         )
 
@@ -201,5 +209,3 @@ if __name__ == "__main__":
         checkpoints = list(sorted(glob.glob(os.path.join(args.output_dir, "checkpointepoch=*.ckpt"), recursive=True)))
         model = model.load_from_checkpoint(checkpoints[-1])
         trainer.test(model)
-
-

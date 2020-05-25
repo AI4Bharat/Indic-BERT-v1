@@ -20,17 +20,23 @@ def read_csv(input_file):
 class AGCProcessor(DataProcessor):
     """Processor for the Article Genre Classification data set"""
 
+    def __init__(self, lang):
+        self.lang = lang
+
     def get_train_examples(self, data_dir):
         """See base class."""
-        return self._create_examples(read_csv(os.path.join(data_dir, "kn-valid.csv")), "train")
+        filename = '{}/{}-train.csv'.format(self.lang, self.lang)
+        return self._create_examples(read_csv(os.path.join(data_dir, filename)), "train")
 
     def get_dev_examples(self, data_dir):
         """See base class."""
-        return self._create_examples(read_csv(os.path.join(data_dir, "kn-test.csv")), "dev")
+        filename = '{}/{}-test.csv'.format(self.lang, self.lang)
+        return self._create_examples(read_csv(os.path.join(data_dir, filename)), "dev")
 
     def get_labels(self, data_dir):
         """See base class."""
-        lines = read_csv(os.path.join(data_dir, "kn-train.csv"))
+        filename = '{}/{}-train.csv'.format(self.lang, self.lang)
+        lines = read_csv(os.path.join(data_dir, filename))
         labels = map(lambda l: l[0], lines)
         labels = list(set(labels))
         return labels
