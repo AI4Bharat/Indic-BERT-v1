@@ -17,8 +17,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-from ..transformer_base import LightningBase, create_trainer
-from ..utils import add_generic_args
+from ..transformer_base import LightningBase, create_trainer, add_generic_args
 from .utils_tc import AGCProcessor, convert_examples_to_features, compute_metrics
 
 
@@ -37,7 +36,7 @@ class TCTransformer(LightningBase):
         self.labels = self.processor.get_labels(hparams.data_dir)
         self.num_labels = len(self.labels)
 
-        super().__init__(hparams, num_labels, self.mode)
+        super().__init__(hparams, self.num_labels, self.mode)
 
     def forward(self, **inputs):
         return self.model(**inputs)
@@ -55,8 +54,9 @@ class TCTransformer(LightningBase):
             self.tokenizer,
             max_length=self.hparams.max_seq_length,
             label_list=self.labels,
-            output_mode=args.iglue_output_mode,
+            output_mode=self.output_mode,
         )
+        return features
 
     def validation_step(self, batch, batch_idx):
         inputs = {"input_ids": batch[0], "token_type_ids": batch[2],
@@ -104,34 +104,6 @@ class TCTransformer(LightningBase):
     @staticmethod
     def add_model_specific_args(parser, root_dir):
         LightningBase.add_model_specific_args(parser, root_dir)
-        parser.add_argument(
-            "--max_seq_length",
-            default=128,
-            type=int,
-            help="The maximum total input sequence length after tokenization. Sequences longer "
-            "than this will be truncated, sequences shorter will be padded.",
-        )
-
-        parser.add_argument(
-            "--data_dir",
-            default=None,
-            type=str,
-            required=True,
-            help="The input data dir",
-        )
-
-        parser.add_argument(
-            "--lang",
-            default=None,
-            type=str,
-            required=True,
-            help="The language we are dealing with",
-        )
-
-        parser.add_argument(
-            "--overwrite_cache", action="store_true", help="Overwrite the cached training and evaluation sets"
-        )
-
         return parser
 
 
@@ -143,14 +115,14 @@ if __name__ == "__main__":
 
     # If output_dir not provided, a folder will be generated in pwd
     if args.output_dir is None:
-        args.output_dir = os.path.join("./results", f"agc_{time.strftime('%Y%m%d_%H%M%S')}",)
-        os.makedirs(args.output_dir)
+       args.output_dir = os.path.join("./results", f"agc_{time.strftime('%Y%m%d_%H%M%S')}",)
+       os.makedirs(args.output_dir)
 
     model = TCTransformer(args)
     trainer = create_trainer(model, args)
 
     if args.do_train:
-        trainer.fit(model)
+       trainer.fit(model)
 
     # Optionally, predict on dev set and write to output_dir
     if args.do_predict:

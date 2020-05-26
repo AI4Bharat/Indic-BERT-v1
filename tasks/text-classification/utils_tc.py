@@ -1,7 +1,15 @@
 
+import csv
+import os
+
 from transformers.data.processors.utils import DataProcessor
 from transformers.data.processors.utils import InputExample, InputFeatures
 from transformers import glue_convert_examples_to_features as convert_examples_to_features
+
+
+def read_csv(filepath):
+    with open(filepath, encoding='utf-8') as fp:
+        return list(csv.reader(fp, delimiter=','))
 
 
 class AGCProcessor(DataProcessor):
