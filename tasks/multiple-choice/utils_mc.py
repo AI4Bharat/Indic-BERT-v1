@@ -128,7 +128,7 @@ class HPProcessor(DataProcessor):
         filename = '{}/{}-test.csv'.format(self.lang, self.lang)
         return self._create_examples(read_json(os.path.join(data_dir, filename)), "test")
 
-    def get_labels(self, data_dir):
+    def get_labels(self):
         """See base class."""
         return ["A", "B", "C", "D"]
 
@@ -148,9 +148,9 @@ class HPProcessor(DataProcessor):
 
 def convert_examples_to_features(
     examples: List[InputExample],
-    label_list: List[str],
-    max_length: int,
     tokenizer: PreTrainedTokenizer,
+    max_length: int,
+    label_list: List[str],
     pad_token_segment_id=0,
     pad_on_left=False,
     pad_token=0,
