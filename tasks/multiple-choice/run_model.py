@@ -33,7 +33,10 @@ from transformers import (
     TrainingArguments,
     set_seed,
 )
-from utils_multiple_choice import MultipleChoiceDataset, Split, processors
+
+from ..transformer_base import LightningBase, create_trainer
+from ..utils import add_generic_args
+from .utils_mc import HPProcessor, convert_examples_to_features, compute_metrics
 
 
 logger = logging.getLogger(__name__)
@@ -127,28 +130,6 @@ def main():
     except KeyError:
         raise ValueError("Task not found: %s" % (data_args.task_name))
 
-    # Load pretrained model and tokenizer
-    #
-    # Distributed training:
-    # The .from_pretrained methods guarantee that only one local process can concurrently
-    # download model & vocab.
-
-    config = AutoConfig.from_pretrained(
-        model_args.config_name if model_args.config_name else model_args.model_name_or_path,
-        num_labels=num_labels,
-        finetuning_task=data_args.task_name,
-        cache_dir=model_args.cache_dir,
-    )
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
-        cache_dir=model_args.cache_dir,
-    )
-    model = AutoModelForMultipleChoice.from_pretrained(
-        model_args.model_name_or_path,
-        from_tf=bool(".ckpt" in model_args.model_name_or_path),
-        config=config,
-        cache_dir=model_args.cache_dir,
-    )
 
     # Get datasets
     train_dataset = (
@@ -163,67 +144,87 @@ def main():
         if training_args.do_train
         else None
     )
-    eval_dataset = (
-        MultipleChoiceDataset(
-            data_dir=data_args.data_dir,
-            tokenizer=tokenizer,
-            task=data_args.task_name,
-            max_seq_length=data_args.max_seq_length,
-            overwrite_cache=data_args.overwrite_cache,
-            mode=Split.dev,
-        )
-        if training_args.do_eval
-        else None
-    )
 
     def compute_metrics(p: EvalPrediction) -> Dict:
         preds = np.argmax(p.predictions, axis=1)
         return {"acc": simple_accuracy(preds, p.label_ids)}
 
-    # Initialize our Trainer
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
-        compute_metrics=compute_metrics,
-    )
 
-    # Training
-    if training_args.do_train:
-        trainer.train(
-            model_path=model_args.model_name_or_path if os.path.isdir(model_args.model_name_or_path) else None
+
+class MCTransformer(LightningBase):
+
+    mode = "multiple-choice"
+    output_mode = "classification"
+
+    def __init__(self, hparams):
+        self.hparams = hparams
+        self.processor = HPProcessor(hparams.lang)
+        self.labels = self.processor.get_labels(hparams.data_dir)
+        self.num_labels = len(self.labels)
+
+        super().__init__(hparams, num_labels, self.mode)
+
+    def forward(self, **inputs):
+        return self.model(**inputs)
+
+    def load_features(self, mode):
+        if mode == "train":
+            examples = self.processor.get_train_examples(self.hparams.data_dir)
+        elif mode == "dev":
+            examples = self.processor.get_dev_examples(self.hparams.data_dir)
+        else:
+            raise "Invalid mode"
+
+        features = convert_examples_to_features(
+            examples,
+            self.tokenizer,
+            max_length=self.hparams.max_seq_length,
+            label_list=self.labels,
+            output_mode=args.iglue_output_mode,
         )
-        trainer.save_model()
-        # For convenience, we also re-save the tokenizer to the same directory,
-        # so that you can share your model easily on huggingface.co/models =)
-        if trainer.is_world_master():
-            tokenizer.save_pretrained(training_args.output_dir)
+    
+    def validation_step(self, batch, batch_idx):
+        inputs = {"input_ids": batch[0], "token_type_ids": batch[2],
+                  "attention_mask": batch[1], "labels": batch[3]}
 
-    # Evaluation
-    results = {}
-    if training_args.do_eval:
-        logger.info("*** Evaluate ***")
+        outputs = self(**inputs)
+        tmp_eval_loss, logits = outputs[:2]
+        preds = logits.detach().cpu().numpy()
+        out_label_ids = inputs["labels"].detach().cpu().numpy()
 
-        result = trainer.evaluate()
+        return {"val_loss": tmp_eval_loss.detach().cpu(), "pred": preds, "target": out_label_ids}
 
-        output_eval_file = os.path.join(training_args.output_dir, "eval_results.txt")
-        if trainer.is_world_master():
-            with open(output_eval_file, "w") as writer:
-                logger.info("***** Eval results *****")
-                for key, value in result.items():
-                    logger.info("  %s = %s", key, value)
-                    writer.write("%s = %s\n" % (key, value))
+    def _eval_end(self, outputs):
+        val_loss_mean = torch.stack([x["val_loss"] for x in outputs]).mean().detach().cpu().item()
+        preds = np.concatenate([x["pred"] for x in outputs], axis=0)
 
-                results.update(result)
+        if self.output_mode == "classification":
+            preds = np.argmax(preds, axis=1)
+        elif self.output_mode == "regression":
+            preds = np.squeeze(preds)
 
-    return results
+        out_label_ids = np.concatenate([x["target"] for x in outputs], axis=0)
+        out_label_list = [[] for _ in range(out_label_ids.shape[0])]
+        preds_list = [[] for _ in range(out_label_ids.shape[0])]
+
+        results = {**{"val_loss": val_loss_mean}, **compute_metrics(preds, out_label_ids)}
+
+        ret = {k: v for k, v in results.items()}
+        ret["log"] = results
+        return ret, preds_list, out_label_list
+
+    def validation_epoch_end(self, outputs: list) -> dict:
+        ret, preds, targets = self._eval_end(outputs)
+        logs = ret["log"]
+        return {"val_loss": logs["val_loss"], "log": logs, "progress_bar": logs}
+
+    def test_epoch_end(self, outputs):
+        ret, predictions, targets = self._eval_end(outputs)
+
+        # Converting to the dic required by pl
+        logs = ret["log"]
+        # `val_loss` is the key returned by `self._eval_end()` but actually refers to `test_loss`
+        return {"avg_test_loss": logs["val_loss"], "log": logs, "progress_bar": logs}
 
 
-def _mp_fn(index):
-    # For xla_spawn (TPUs)
-    main()
 
-
-if __name__ == "__main__":
-    main()

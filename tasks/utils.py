@@ -3,7 +3,6 @@ import torch
 
 
 def loader_from_features(features, output_mode, batch_size):
-    features = torch.load(cached_features_file)
     all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
     all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
     all_token_type_ids = torch.tensor([f.token_type_ids or 0 for f in features], dtype=torch.long)
