@@ -5,31 +5,36 @@ import glob
 import logging
 import os
 import time
+import pickle
+import threading
+import sys
+import scipy.spatial as sp
+from filelock import FileLock
 
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-from lightning_base import BaseTransformer, add_generic_args, generic_train
-
-from iglue import compute_metrics
-from iglue import convert_examples_to_features 
-from iglue import iglue_output_modes
-from iglue import iglue_processors as processors
+from ..transformer_base import LightningBase, create_trainer, add_generic_args, loader_from_features
+from .utils_xsr import MKBProcessor, convert_examples_to_features
 
 
 logger = logging.getLogger(__name__)
 
 
-class SentEncodingTransformer(BaseTransformer):
+class SentEncodingTransformer(LightningBase):
 
     mode = "base"
+    output_mode = "classification"
 
     def __init__(self, hparams):
 
         self.processor = MKBProcessor(hparams.lang)
+        self.test_results_fpath = 'test_results'
+        if os.path.exists(self.test_results_fpath):
+            os.remove(self.test_results_fpath)
 
-        super().__init__(hparams, self.mode)
+        super().__init__(hparams, mode=self.mode)
 
     def forward(self, **inputs):
         outputs = self.model(**inputs)
@@ -37,64 +42,65 @@ class SentEncodingTransformer(BaseTransformer):
         mean_pooled = torch.mean(last_hidden, 1)
         return mean_pooled
 
-    def test_dataloader1(self):
-        pass
+    def load_features(self, mode):
+        if mode == "en":
+            examples = self.processor.get_examples_en(self.hparams.data_dir)
+        elif mode == "in":
+            examples = self.processor.get_examples_in(self.hparams.data_dir)
+        else:
+            raise "Invalid mode"
 
-    def test_dataloader2(self):
-        pass
+        features = convert_examples_to_features(
+            examples,
+            self.tokenizer,
+            max_length=self.hparams.max_seq_length,
+            label_list=["0"],
+            output_mode=self.output_mode,
+        )
+        return features
+
+    def test_dataloader_en(self):
+        return self.cached_loader("en", 32)
+
+    def test_dataloader_in(self):
+        return self.cached_loader("in", 32)
 
     def test_step(self, batch, batch_idx):
         inputs = {"input_ids": batch[0], "token_type_ids": batch[2],
-                  "attention_mask": batch[1], "labels": batch[3]}
-
+                  "attention_mask": batch[1]}
         sentvecs = self(**inputs)
         sentvecs = sentvecs.detach().cpu().numpy()
 
         return {"sentvecs": sentvecs}
 
     def test_epoch_end(self, outputs):
-        all_sentvecs = torch.stack([x["sentvecs"] for x in outputs]).detach().cpu()
-        return {"sentvecs": sentvecs}
+        all_sentvecs = np.vstack([x["sentvecs"] for x in outputs])
+
+        with FileLock(self.test_results_fpath + '.lock'):
+            if os.path.exists(self.test_results_fpath):
+                with open(self.test_results_fpath, 'rb') as fp:
+                    data = pickle.load(fp)
+                data = np.vstack([data, all_sentvecs])
+            else:
+                data = all_sentvecs
+            with open(self.test_results_fpath, 'wb') as fp:
+                pickle.dump(data, fp)
+
+        return {"sentvecs": all_sentvecs}
 
     @staticmethod
     def add_model_specific_args(parser, root_dir):
-        BaseTransformer.add_model_specific_args(parser, root_dir)
-        parser.add_argument(
-            "--max_seq_length",
-            default=128,
-            type=int,
-            help="The maximum total input sequence length after tokenization. Sequences longer "
-            "than this will be truncated, sequences shorter will be padded.",
-        )
-
-        parser.add_argument(
-            "--data_dir",
-            default=None,
-            type=str,
-            required=True,
-            help="The input data dir. Should contain the training files for the CoNLL-2003 NER task.",
-        )
-
-        parser.add_argument(
-            "--lang",
-            default=None,
-            type=str,
-            required=True,
-            help="The language we are dealing with",
-        )
-
-        parser.add_argument(
-            "--overwrite_cache", action="store_true", help="Overwrite the cached training and evaluation sets"
-        )
-
+        LightningBase.add_model_specific_args(parser, root_dir)
         return parser
 
 
 def compute_accuracy(sentvecs1, sentvecs2):
-
-    dist = F.cosine_similarity(sentvecs1, sentvecs2)
-    index_sorted = torch.argsort(dist)
-    best = index_sorted[0]
+    n = sentvecs1.shape[0]
+    sim = sp.distance.cdist(sentvecs1, sentvecs2, 'cosine')
+    actual = np.array(range(n))
+    preds = sim.argsort(axis=1)[:, :100]
+    matches = np.any(preds == actual[:, None], axis=1)
+    return matches.mean()
 
 
 if __name__ == "__main__":
@@ -109,7 +115,18 @@ if __name__ == "__main__":
         os.makedirs(args.output_dir)
 
     model = SentEncodingTransformer(args)
+    # model.eval()
+    # model.freeze()
+
     trainer = create_trainer(model, args)
 
-    sentvecs1 = trainer.test(model, test_dataloader=model.test_dataloader1)
-    sentvecs2 = trainer.test(model, test_dataloader=model.test_dataloader2)
+    trainer.test(model, model.test_dataloader_en())
+    sentvecs1 = pickle.load(open(model.test_results_fpath, 'rb'))
+
+    os.remove(model.test_results_fpath)
+
+    trainer.test(model, model.test_dataloader_in())
+    sentvecs2 = pickle.load(open(model.test_results_fpath, 'rb'))
+
+    print('Accuracy: ', compute_accuracy(sentvecs1, sentvecs2))
+
