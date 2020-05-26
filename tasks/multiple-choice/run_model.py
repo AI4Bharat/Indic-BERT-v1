@@ -23,17 +23,6 @@ from typing import Dict, Optional
 
 import numpy as np
 
-from transformers import (
-    AutoConfig,
-    AutoModelForMultipleChoice,
-    AutoTokenizer,
-    EvalPrediction,
-    HfArgumentParser,
-    Trainer,
-    TrainingArguments,
-    set_seed,
-)
-
 from ..transformer_base import LightningBase, create_trainer
 from ..utils import add_generic_args
 from .utils_mc import HPProcessor, convert_examples_to_features, compute_metrics
@@ -46,111 +35,6 @@ def simple_accuracy(preds, labels):
     return (preds == labels).mean()
 
 
-@dataclass
-class ModelArguments:
-    """
-    Arguments pertaining to which model/config/tokenizer we are going to fine-tune from.
-    """
-
-    model_name_or_path: str = field(
-        metadata={"help": "Path to pretrained model or model identifier from huggingface.co/models"}
-    )
-    config_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained config name or path if not the same as model_name"}
-    )
-    tokenizer_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
-    )
-    cache_dir: Optional[str] = field(
-        default=None, metadata={"help": "Where do you want to store the pretrained models downloaded from s3"}
-    )
-
-
-@dataclass
-class DataTrainingArguments:
-    """
-    Arguments pertaining to what data we are going to input our model for training and eval.
-    """
-
-    task_name: str = field(metadata={"help": "The name of the task to train on: " + ", ".join(processors.keys())})
-    data_dir: str = field(metadata={"help": "Should contain the data files for the task."})
-    max_seq_length: int = field(
-        default=128,
-        metadata={
-            "help": "The maximum total input sequence length after tokenization. Sequences longer "
-            "than this will be truncated, sequences shorter will be padded."
-        },
-    )
-    overwrite_cache: bool = field(
-        default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
-    )
-
-
-def main():
-    # See all possible arguments in src/transformers/training_args.py
-    # or by passing the --help flag to this script.
-    # We now keep distinct sets of args, for a cleaner separation of concerns.
-
-    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
-    model_args, data_args, training_args = parser.parse_args_into_dataclasses()
-
-    if (
-        os.path.exists(training_args.output_dir)
-        and os.listdir(training_args.output_dir)
-        and training_args.do_train
-        and not training_args.overwrite_output_dir
-    ):
-        raise ValueError(
-            f"Output directory ({training_args.output_dir}) already exists and is not empty. Use --overwrite_output_dir to overcome."
-        )
-
-    # Setup logging
-    logging.basicConfig(
-        format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
-        datefmt="%m/%d/%Y %H:%M:%S",
-        level=logging.INFO if training_args.local_rank in [-1, 0] else logging.WARN,
-    )
-    logger.warning(
-        "Process rank: %s, device: %s, n_gpu: %s, distributed training: %s, 16-bits training: %s",
-        training_args.local_rank,
-        training_args.device,
-        training_args.n_gpu,
-        bool(training_args.local_rank != -1),
-        training_args.fp16,
-    )
-    logger.info("Training/evaluation parameters %s", training_args)
-
-    # Set seed
-    set_seed(training_args.seed)
-
-    try:
-        processor = processors[data_args.task_name]()
-        label_list = processor.get_labels()
-        num_labels = len(label_list)
-    except KeyError:
-        raise ValueError("Task not found: %s" % (data_args.task_name))
-
-
-    # Get datasets
-    train_dataset = (
-        MultipleChoiceDataset(
-            data_dir=data_args.data_dir,
-            tokenizer=tokenizer,
-            task=data_args.task_name,
-            max_seq_length=data_args.max_seq_length,
-            overwrite_cache=data_args.overwrite_cache,
-            mode=Split.train,
-        )
-        if training_args.do_train
-        else None
-    )
-
-    def compute_metrics(p: EvalPrediction) -> Dict:
-        preds = np.argmax(p.predictions, axis=1)
-        return {"acc": simple_accuracy(preds, p.label_ids)}
-
-
-
 class MCTransformer(LightningBase):
 
     mode = "multiple-choice"
@@ -159,7 +43,7 @@ class MCTransformer(LightningBase):
     def __init__(self, hparams):
         self.hparams = hparams
         self.processor = HPProcessor(hparams.lang)
-        self.labels = self.processor.get_labels(hparams.data_dir)
+        self.labels = self.processor.get_labels()
         self.num_labels = len(self.labels)
 
         super().__init__(hparams, num_labels, self.mode)
@@ -180,9 +64,8 @@ class MCTransformer(LightningBase):
             self.tokenizer,
             max_length=self.hparams.max_seq_length,
             label_list=self.labels,
-            output_mode=args.iglue_output_mode,
         )
-    
+
     def validation_step(self, batch, batch_idx):
         inputs = {"input_ids": batch[0], "token_type_ids": batch[2],
                   "attention_mask": batch[1], "labels": batch[3]}
@@ -226,5 +109,30 @@ class MCTransformer(LightningBase):
         # `val_loss` is the key returned by `self._eval_end()` but actually refers to `test_loss`
         return {"avg_test_loss": logs["val_loss"], "log": logs, "progress_bar": logs}
 
+    @staticmethod
+    def add_model_specific_args(parser, root_dir):
+        LightningBase.add_model_specific_args(parser, root_dir)
 
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    add_generic_args(parser, os.getcwd())
+    parser = TCTransformer.add_model_specific_args(parser, os.getcwd())
+    args = parser.parse_args()
+
+    # If output_dir not provided, a folder will be generated in pwd
+    if args.output_dir is None:
+        args.output_dir = os.path.join("./results", f"agc_{time.strftime('%Y%m%d_%H%M%S')}",)
+        os.makedirs(args.output_dir)
+
+    model = TCTransformer(args)
+    trainer = create_trainer(model, args)
+
+    if args.do_train:
+        trainer.fit(model)
+
+    # Optionally, predict on dev set and write to output_dir
+    if args.do_predict:
+        checkpoints = list(sorted(glob.glob(os.path.join(args.output_dir, "checkpointepoch=*.ckpt"), recursive=True)))
+        model = model.load_from_checkpoint(checkpoints[-1])
+        trainer.test(model)
