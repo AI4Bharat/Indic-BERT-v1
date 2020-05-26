@@ -41,23 +41,24 @@ MODEL_MODES = {
 }
 
 
-class BaseTransformer:
+def set_seed(args: argparse.Namespace):
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    if args.n_gpu > 0:
+        torch.cuda.manual_seed_all(args.seed)
+
+
+class LightningBase(pl.LightningModule):
     """
-    Represents all components of a model: transformer model, tokenizer, configuration
+    Represents the combination of a transformer model and a dataset
+    The data can have any of the following components: train, dev or test
+    This class is used for running models on TPUs
     """
 
-    def __init__(
-            self,
-            model_name_or_path,
-            tokenizer_name=None,
-            config_name=None,
-            mode="base",
-            num_labels=None,
-            cache_dir=None,
-            **kwargs
-    ):
+    def __init__(self, hparams: argparse.Namespace, num_labels=None, mode="base"):
+        self.hparams = hparams
         super().__init__()
-
         self.config = AutoConfig.from_pretrained(
             config_name if config_name else model_name_or_path,
             **({"num_labels": num_labels} if num_labels is not None else {}),
@@ -73,32 +74,9 @@ class BaseTransformer:
             config=self.config,
             cache_dir=cache_dir,
         )
-
-
-def set_seed(args: argparse.Namespace):
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    if args.n_gpu > 0:
-        torch.cuda.manual_seed_all(args.seed)
-
-
-class LightningBase(BaseTransformer, pl.LightningModule):
-    """
-    Represents the combination of a transformer model and a dataset
-    The data can have any of the following components: train, dev or test
-    This class is used for running models on TPUs
-    """
-
-    def __init__(self, hparams: argparse.Namespace, num_labels=None, mode="base"):
-
-       self.hparams = hparams
-       BaseTransformer.__init__(hparams.model_name_or_path, mode=mode,
-                                num_labels=num_labels, **vars(hparams))
-
-   def is_logger(self):
-
-       return self.trainer.proc_rank <= 0
+        
+    def is_logger(self):
+        return self.trainer.proc_rank <= 0
 
     def configure_optimizers(self):
         "Prepare optimizer and schedule (linear warmup and decay)"
