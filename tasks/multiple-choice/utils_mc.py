@@ -109,7 +109,7 @@ class WSTPProcessor(DataProcessor):
 
 
 def read_json(filepath):
-    return json.load(open(filepath))
+    return json.load(open(filepath, encoding='utf-8'))
 
 
 class HPProcessor(DataProcessor):
@@ -120,19 +120,19 @@ class HPProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir):
         """See base class."""
-        filename = '{}/{}-train.csv'.format(self.lang, self.lang)
+        filename = '{}/{}-train.json'.format(self.lang, self.lang)
         return self._create_examples(read_json(os.path.join(data_dir, filename)), "train")
 
     def get_dev_examples(self, data_dir):
         """See base class."""
-        filename = '{}/{}-test.csv'.format(self.lang, self.lang)
+        filename = '{}/{}-test.json'.format(self.lang, self.lang)
         return self._create_examples(read_json(os.path.join(data_dir, filename)), "test")
 
     def get_labels(self):
         """See base class."""
         return ["A", "B", "C", "D"]
 
-    def _create_examples(self, lines, set_type):
+    def _create_examples(self, items, set_type):
         """Creates examples for the training and dev sets."""
         examples = [
             InputExample(
@@ -144,6 +144,7 @@ class HPProcessor(DataProcessor):
             )
             for idx, item in enumerate(items)
         ]
+        return examples
 
 
 def convert_examples_to_features(
@@ -217,3 +218,7 @@ def convert_examples_to_features(
         logger.info("feature: %s" % f)
 
     return features
+
+
+def compute_metrics(preds, labels):
+    return {'acc': (preds == labels).mean()}

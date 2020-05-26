@@ -18,13 +18,15 @@
 
 import logging
 import os
+import argparse
+import glob
+import torch
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 
 import numpy as np
 
-from ..transformer_base import LightningBase, create_trainer
-from ..utils import add_generic_args
+from ..transformer_base import LightningBase, create_trainer, add_generic_args
 from .utils_mc import HPProcessor, convert_examples_to_features, compute_metrics
 
 
@@ -46,7 +48,7 @@ class MCTransformer(LightningBase):
         self.labels = self.processor.get_labels()
         self.num_labels = len(self.labels)
 
-        super().__init__(hparams, num_labels, self.mode)
+        super().__init__(hparams, self.num_labels, self.mode)
 
     def forward(self, **inputs):
         return self.model(**inputs)
@@ -65,6 +67,14 @@ class MCTransformer(LightningBase):
             max_length=self.hparams.max_seq_length,
             label_list=self.labels,
         )
+        return features
+
+    def prepare_data(self):
+        for mode in ["train", "dev"]:
+            cached_features_file = self._feature_file(mode)
+            if not os.path.exists(cached_features_file) or self.hparams.overwrite_cache:
+                features = self.load_features(mode)
+                torch.save(features, cached_features_file)
 
     def validation_step(self, batch, batch_idx):
         inputs = {"input_ids": batch[0], "token_type_ids": batch[2],
@@ -112,12 +122,13 @@ class MCTransformer(LightningBase):
     @staticmethod
     def add_model_specific_args(parser, root_dir):
         LightningBase.add_model_specific_args(parser, root_dir)
+        return parser
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     add_generic_args(parser, os.getcwd())
-    parser = TCTransformer.add_model_specific_args(parser, os.getcwd())
+    parser = MCTransformer.add_model_specific_args(parser, os.getcwd())
     args = parser.parse_args()
 
     # If output_dir not provided, a folder will be generated in pwd
@@ -125,7 +136,7 @@ if __name__ == "__main__":
         args.output_dir = os.path.join("./results", f"agc_{time.strftime('%Y%m%d_%H%M%S')}",)
         os.makedirs(args.output_dir)
 
-    model = TCTransformer(args)
+    model = MCTransformer(args)
     trainer = create_trainer(model, args)
 
     if args.do_train:

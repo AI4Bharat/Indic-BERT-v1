@@ -6,6 +6,7 @@ import argparse
 import logging
 import os
 import random
+import copy
 
 import numpy as np
 import pytorch_lightning as pl
@@ -22,11 +23,10 @@ from transformers import (
     AutoModelForSequenceClassification,
     AutoModelForTokenClassification,
     AutoModelWithLMHead,
+    AutoModelForMultipleChoice,
     AutoTokenizer,
     get_linear_schedule_with_warmup,
 )
-
-from .utils import loader_from_features
 
 
 logger = logging.getLogger(__name__)
@@ -39,6 +39,7 @@ MODEL_MODES = {
     "pretraining": AutoModelForPreTraining,
     "token-classification": AutoModelForTokenClassification,
     "language-modeling": AutoModelWithLMHead,
+    "multiple-choice": AutoModelForMultipleChoice,
 }
 
 
@@ -144,16 +145,16 @@ class LightningBase(pl.LightningModule):
 
     def cached_loader(self, mode, batch_size):
         cached_features_file = self._feature_file(mode)
-        if os.path.exists(cached_features_file) and not args.overwrite_cache:
+        if os.path.exists(cached_features_file) and not self.hparams.overwrite_cache:
             features = torch.load(cached_features_file)
         else:
-            features = self.load_features("mode")
+            features = self.load_features(mode)
             torch.save(features, cached_features_file)
         return loader_from_features(features, self.output_mode, batch_size)
 
     def train_dataloader(self):
         train_batch_size = self.hparams.train_batch_size
-        dataloader = self._cached_loader("train", self.output_mode, train_batch_size)
+        dataloader = self.cached_loader("train", train_batch_size)
 
         t_total = (
             (len(dataloader.dataset) // (train_batch_size * max(1, self.hparams.n_gpu)))
@@ -167,10 +168,13 @@ class LightningBase(pl.LightningModule):
         return dataloader
 
     def val_dataloader(self):
-        return self.cached_loader("dev", self.output_mode, self.hparams.eval_batch_size)
+        return self.cached_loader("dev", self.hparams.eval_batch_size)
+
+    def validation_step(self, batch, batch_nb):
+        raise NotImplementedError
 
     def test_dataloader(self):
-        return self.cached_loader("test", self.output_mode, self.hparams.eval_batch_size)
+        return self.cached_loader("dev", self.hparams.eval_batch_size)
 
     def _feature_file(self, mode):
         return os.path.join(
@@ -307,6 +311,7 @@ class LoggingCallback(pl.Callback):
 
     def on_test_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
         logger.info("***** Test results *****")
+        print(trainer.callback_metrics)
 
         if pl_module.is_logger():
             metrics = trainer.callback_metrics
@@ -325,7 +330,7 @@ def create_trainer(model: LightningBase, args: argparse.Namespace):
     set_seed(args)
 
     if os.path.exists(args.output_dir) and os.listdir(args.output_dir) and args.do_train:
-        raise ValueError("Output directory ({}) already exists and is not empty.".format(args.output_dir))
+       raise ValueError("Output directory ({}) already exists and is not empty.".format(args.output_dir))
 
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         filepath=args.output_dir, prefix="checkpoint", monitor="val_loss", mode="min", save_top_k=5
