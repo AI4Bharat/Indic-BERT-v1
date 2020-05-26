@@ -57,20 +57,22 @@ class LightningBase(pl.LightningModule):
     """
 
     def __init__(self, hparams: argparse.Namespace, num_labels=None, mode="base"):
-        self.hparams = hparams
         super().__init__()
+        self.hparams = hparams # must come after super
+        cache_dir = self.hparams.cache_dir if self.hparams.cache_dir else None
+
         self.config = AutoConfig.from_pretrained(
-            config_name if config_name else model_name_or_path,
+            self.hparams.config_name if self.hparams.config_name else self.hparams.model_name_or_path,
             **({"num_labels": num_labels} if num_labels is not None else {}),
             cache_dir=cache_dir
         )
         self.tokenizer = AutoTokenizer.from_pretrained(
-            tokenizer_name if tokenizer_name else model_name_or_path,
+            self.hparams.tokenizer_name if self.hparams.tokenizer_name else self.hparams.model_name_or_path,
             cache_dir=cache_dir,
         )
         self.model = MODEL_MODES[mode].from_pretrained(
-            model_name_or_path,
-            from_tf=bool(".ckpt" in model_name_or_path),
+            self.hparams.model_name_or_path,
+            from_tf=bool(".ckpt" in self.hparams.model_name_or_path),
             config=self.config,
             cache_dir=cache_dir,
         )
@@ -218,7 +220,7 @@ class LoggingCallback(pl.Callback):
                         writer.write("{} = {}\n".format(key, str(metrics[key])))
 
 
-def create_trainer(model: BaseTransformer, args: argparse.Namespace):
+def create_trainer(model: LightningBase, args: argparse.Namespace):
     # init model
     set_seed(args)
 
