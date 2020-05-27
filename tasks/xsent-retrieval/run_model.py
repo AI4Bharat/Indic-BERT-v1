@@ -40,6 +40,7 @@ class SentEncodingTransformer(LightningBase):
     def forward(self, **inputs):
         outputs = self.model(**inputs)
         last_hidden = outputs[0]
+        last_hidden = last_hidden[:, :32, :]
         mean_pooled = torch.mean(last_hidden, 1)
         return mean_pooled
 
@@ -99,8 +100,8 @@ def compute_accuracy(sentvecs1, sentvecs2):
     n = sentvecs1.shape[0]
 
     # mean centering
-    # sentvecs1 = sentvecs1 - np.mean(sentvecs1, axis=0)
-    # sentvecs2 = sentvecs2 - np.mean(sentvecs2, axis=0)
+    sentvecs1 = sentvecs1 - np.mean(sentvecs1, axis=0)
+    sentvecs2 = sentvecs2 - np.mean(sentvecs2, axis=0)
 
     # linear transform sentvecs1
     # reg = LinearRegression().fit(sentvecs1[:1000,:], sentvecs2[:1000,:])
@@ -111,7 +112,7 @@ def compute_accuracy(sentvecs1, sentvecs2):
     # print(sentvecs2.shape)
 
     sim = sp.distance.cdist(sentvecs1, sentvecs2, 'cosine')
-    actual = np.array(range(n-1000))
+    actual = np.array(range(n))
     preds = sim.argsort(axis=1)[:, :100]
     matches = np.any(preds == actual[:, None], axis=1)
     return matches.mean()
