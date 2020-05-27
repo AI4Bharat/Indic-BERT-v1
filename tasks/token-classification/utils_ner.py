@@ -41,7 +41,6 @@ class InputExample:
         labels: (Optional) list. The labels for each word of the sequence. This should be
         specified for train and dev examples, but not for test examples.
     """
-
     guid: str
     words: List[str]
     labels: Optional[List[str]]
@@ -53,87 +52,10 @@ class InputFeatures:
     A single set of features of data.
     Property names are the same names as the corresponding inputs to a model.
     """
-
     input_ids: List[int]
     attention_mask: List[int]
     token_type_ids: Optional[List[int]] = None
     label_ids: Optional[List[int]] = None
-
-
-class Split(Enum):
-    train = "train"
-    dev = "dev"
-    test = "test"
-
-
-if is_torch_available():
-    import torch
-    from torch import nn
-    from torch.utils.data.dataset import Dataset
-
-    class NerDataset(Dataset):
-        """
-        This will be superseded by a framework-agnostic approach
-        soon.
-        """
-
-        features: List[InputFeatures]
-        pad_token_label_id: int = nn.CrossEntropyLoss().ignore_index
-        # Use cross entropy ignore_index as padding label id so that only
-        # real label ids contribute to the loss later.
-
-        def __init__(
-            self,
-            data_dir: str,
-            tokenizer: PreTrainedTokenizer,
-            labels: List[str],
-            model_type: str,
-            max_seq_length: Optional[int] = None,
-            overwrite_cache=False,
-            mode: Split = Split.train,
-        ):
-            # Load data features from cache or dataset file
-            cached_features_file = os.path.join(
-                data_dir, "cached_{}_{}_{}".format(mode.value, tokenizer.__class__.__name__, str(max_seq_length)),
-            )
-
-            # Make sure only the first process in distributed training processes the dataset,
-            # and the others will use the cache.
-            lock_path = cached_features_file + ".lock"
-            with FileLock(lock_path):
-
-                if os.path.exists(cached_features_file) and not overwrite_cache:
-                    logger.info(f"Loading features from cached file {cached_features_file}")
-                    self.features = torch.load(cached_features_file)
-                else:
-                    logger.info(f"Creating features from dataset file at {data_dir}")
-                    examples = read_examples_from_file(data_dir, mode)
-                    # TODO clean up all this to leverage built-in features of tokenizers
-                    self.features = convert_examples_to_features(
-                        examples,
-                        labels,
-                        max_seq_length,
-                        tokenizer,
-                        cls_token_at_end=bool(model_type in ["xlnet"]),
-                        # xlnet has a cls token at the end
-                        cls_token=tokenizer.cls_token,
-                        cls_token_segment_id=2 if model_type in ["xlnet"] else 0,
-                        sep_token=tokenizer.sep_token,
-                        sep_token_extra=bool(model_type in ["roberta"]),
-                        # roberta uses an extra separator b/w pairs of sentences, cf. github.com/pytorch/fairseq/commit/1684e166e3da03f5b600dbb7855cb98ddfcd0805
-                        pad_on_left=bool(tokenizer.padding_side == "left"),
-                        pad_token=tokenizer.pad_token_id,
-                        pad_token_segment_id=tokenizer.pad_token_type_id,
-                        pad_token_label_id=self.pad_token_label_id,
-                    )
-                    logger.info(f"Saving features into cached file {cached_features_file}")
-                    torch.save(self.features, cached_features_file)
-
-        def __len__(self):
-            return len(self.features)
-
-        def __getitem__(self, i) -> InputFeatures:
-            return self.features[i]
 
 
 def read_examples_from_file(data_dir, mode: Union[Split, str]) -> List[InputExample]:
@@ -302,39 +224,3 @@ def get_labels(path: str) -> List[str]:
         return labels
     else:
         return ["O", "B-MISC", "I-MISC", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC"]
-
-
-
-class NERProcessor(DataProcessor):
-    """Processor for the Named Entity Recognition dataset"""
-
-    def __init__(self, lang):
-        self.lang = lang
-
-    def get_train_examples(self, data_dir):
-        """See base class."""
-        filename = '{}/{}-train.csv'.format(self.lang, self.lang)
-        return self._create_examples(read_csv(os.path.join(data_dir, filename)), "train")
-
-    def get_dev_examples(self, data_dir):
-        """See base class."""
-        filename = '{}/{}-test.csv'.format(self.lang, self.lang)
-        return self._create_examples(read_csv(os.path.join(data_dir, filename)), "dev")
-
-    def get_labels(self, data_dir):
-        """See base class."""
-        filename = '{}/{}-train.csv'.format(self.lang, self.lang)
-        lines = read_csv(os.path.join(data_dir, filename))
-        labels = map(lambda l: l[0], lines)
-        labels = list(set(labels))
-        return labels
-
-    def _create_examples(self, lines, set_type):
-        """Creates examples for the training and dev sets."""
-        examples = []
-        for (i, line) in enumerate(lines):
-            guid = "%s-%s" % (set_type, i)
-            text_a = line[1]
-            label = line[0]
-            examples.append(InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
-        return examples

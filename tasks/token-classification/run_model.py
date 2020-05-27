@@ -9,14 +9,14 @@ from seqeval.metrics import f1_score, precision_score, recall_score
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader, TensorDataset
 
-from ..lightning_base import BaseTransformer, add_generic_args, generic_train
+from ..transformer_base import LightningBase, add_generic_args, generic_train
 from .utils_ner import convert_examples_to_features, get_labels, read_examples_from_file
 
 
 logger = logging.getLogger(__name__)
 
 
-class NERTransformer(BaseTransformer):
+class NERTransformer(LightningBase):
     """
     A training module for NER. See BaseTransformer for the core options.
     """
@@ -152,35 +152,13 @@ class NERTransformer(BaseTransformer):
 
     @staticmethod
     def add_model_specific_args(parser, root_dir):
-        # Add NER specific options
-        BaseTransformer.add_model_specific_args(parser, root_dir)
-        parser.add_argument(
-            "--max_seq_length",
-            default=128,
-            type=int,
-            help="The maximum total input sequence length after tokenization. Sequences longer "
-            "than this will be truncated, sequences shorter will be padded.",
-        )
-
+        LightningBase.add_model_specific_args(parser, root_dir)
         parser.add_argument(
             "--labels",
             default="",
             type=str,
             help="Path to a file containing all labels. If not specified, CoNLL-2003 labels are used.",
         )
-
-        parser.add_argument(
-            "--data_dir",
-            default=None,
-            type=str,
-            required=True,
-            help="The input data dir. Should contain the training files for the CoNLL-2003 NER task.",
-        )
-
-        parser.add_argument(
-            "--overwrite_cache", action="store_true", help="Overwrite the cached training and evaluation sets"
-        )
-
         return parser
 
 
@@ -191,6 +169,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     model = NERTransformer(args)
     trainer = generic_train(model, args)
+
+    if args.do_train:
+       trainer.fit(model)
 
     if args.do_predict:
         # See https://github.com/huggingface/transformers/issues/3159
