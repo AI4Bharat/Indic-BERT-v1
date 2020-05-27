@@ -1,7 +1,6 @@
 """
 Based on https://github.com/huggingface/transformers/issues/80
 
-We don't use pytorch lightning for testing here
 """
 
 import argparse
@@ -37,13 +36,67 @@ class MEPTransformer(LightningBase):
 
         super().__init__(hparams, num_labels, self.mode)
 
+	self.mask_id = self.tokenizer.convert_tokens_to_ids('[MASK]')
+        self.test_results_fpath = 'test_results'
+        if os.path.exists(self.test_results_fpath):
+            os.remove(self.test_results_fpath)
+
     def forward(self, **inputs):
         return self.model(**inputs)
 
-    def test(self):
+    def load_features(self, mode):
+        if mode in ["dev" or "test"]:
+            examples = self.processor.get_test_examples(self.hparams.data_dir)
+        else:
+            raise "Invalid mode"
 
-	mask_id = tokenizer.convert_tokens_to_ids('[MASK]')
+        features = convert_examples_to_features(
+            examples,
+            self.tokenizer,
+            max_length=self.hparams.max_seq_length,
+            label_list=self.labels,
+            output_mode=self.output_mode,
+        )
+        return features
 
+    def test_step(self, batch, batch_idx):
+        inputs = {"input_ids": batch[0], "token_type_ids": batch[2],
+                  "attention_mask": batch[1]}
+        labels = batch[3]   # holds example ids
+
+        predictions = self(**inputs)
+        predictions = outputs.detach().cpu().numpy()
+
+        # get first mask location
+        input_ids = batch[0]
+        mask_ids = (input_ids == self.mask_id).argmax(axis=1)
+
+        predictions = predictions[:, mask_ids, :]
+        outputs = np.hstack([labels, predictions])
+
+        return {"outputs": outputs}
+
+    def test_epoch_end(self, outputs):
+        all_outputs = np.vstack([x["outputs"] for x in outputs])
+
+        with FileLock(self.test_results_fpath + '.lock'):
+            if os.path.exists(self.test_results_fpath):
+                with open(self.test_results_fpath, 'rb') as fp:
+                    data = pickle.load(fp)
+                data = np.vstack([data, all_outputs])
+            else:
+                data = all_sentvecs
+            with open(self.test_results_fpath, 'wb') as fp:
+                pickle.dump(data, fp)
+
+        return {"outputs": all_outputs}
+
+    @staticmethod
+    def add_model_specific_args(parser, root_dir):
+        LightningBase.add_model_specific_args(parser, root_dir)
+        return parser
+
+"""
         for example in self.processors.get_test_examples(self.hparams.data_dir):
 	    candidates = example['candidates']
 	    candidates = [max(self.tokenizer.tokenize(cand), key=lambda t: len(t.strip(string.punctuation)))
@@ -64,52 +117,31 @@ class MEPTransformer(LightningBase):
             answer_idx = torch.argmax(predictions_candidates).item()
 
             print(f'The most likely word is "{candidates[answer_idx]}".')
-
-    @staticmethod
-    def add_model_specific_args(parser, root_dir):
-        LightningBase.add_model_specific_args(parser, root_dir)
-        parser.add_argument(
-            "--max_seq_length",
-            default=128,
-            type=int,
-            help="The maximum total input sequence length after tokenization. Sequences longer "
-            "than this will be truncated, sequences shorter will be padded.",
-        )
-
-        parser.add_argument(
-            "--data_dir",
-            default=None,
-            type=str,
-            required=True,
-            help="The input data dir",
-        )
-
-        parser.add_argument(
-            "--lang",
-            default=None,
-            type=str,
-            required=True,
-            help="The language we are dealing with",
-        )
-
-        parser.add_argument(
-            "--overwrite_cache", action="store_true", help="Overwrite the cached training and evaluation sets"
-        )
-
-        return parser
-
+"""
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     add_generic_args(parser, os.getcwd())
-    parser = TCTransformer.add_model_specific_args(parser, os.getcwd())
+    parser = SentEncodingTransformer.add_model_specific_args(parser, os.getcwd())
     args = parser.parse_args()
 
     # If output_dir not provided, a folder will be generated in pwd
     if args.output_dir is None:
-        args.output_dir = os.path.join("./results", f"agc_{time.strftime('%Y%m%d_%H%M%S')}",)
+        args.output_dir = os.path.join("./results", f"xsr_{time.strftime('%Y%m%d_%H%M%S')}",)
         os.makedirs(args.output_dir)
 
-    model = MEPTransformer(args)
-    print(model.test())
+    model = SentEncodingTransformer(args)
+    # model.eval()
+    # model.freeze()
 
+    trainer = create_trainer(model, args)
+
+    trainer.test(model, model.test_dataloader_en())
+    preds1 = pickle.load(open(model.test_results_fpath, 'rb'))
+
+    os.remove(model.test_results_fpath)
+
+    trainer.test(model, model.test_dataloader_in())
+    preds2 = pickle.load(open(model.test_results_fpath, 'rb'))
+
+    # print('Accuracy: ', compute_accuracy(sentvecs1, sentvecs2))

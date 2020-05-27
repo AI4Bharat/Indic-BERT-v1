@@ -1,17 +1,16 @@
 
 import json
+import csv
+import os
 
 from typing import List, Dict, Optional
+from transformers.data.processors.utils import DataProcessor
+from transformers.data.processors.utils import InputExample, InputFeatures
+from transformers import glue_convert_examples_to_features as convert_examples_to_features
+
 
 def read_json(filepath):
-    return json.load(open(filepath))
-
-
-@dataclass
-class InputExample:
-    question: str
-    candidates: List[str]
-    answer: int
+    return json.load(open(filepath, encoding='utf-8'))
 
 
 class MEPProcessor(DataProcessor):
@@ -35,7 +34,6 @@ class MEPProcessor(DataProcessor):
         for (i, item) in enumerate(items):
             guid = "%s-%s" % (set_type, i)
             text_a = item["question"].replace('<MASK>', '[MASK]')
-            label = line[0]
-            candidates = 
+            label = i   # represent the index of example
             examples.append(InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
         return examples
