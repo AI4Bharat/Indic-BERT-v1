@@ -10,7 +10,7 @@ from transformers import glue_convert_examples_to_features as convert_examples_t
 
 
 def read_json(filepath):
-    return json.load(open(filepath, encoding='utf-8'))
+    return json.load(open(filepath, encoding='utf-8'))['cloze_data']
 
 
 class MEPProcessor(DataProcessor):
@@ -21,12 +21,21 @@ class MEPProcessor(DataProcessor):
 
     def get_test_examples(self, data_dir):
         """See base class."""
-        filename = '{}.json'.format(self.lang)
+        filename = '{}/{}.json'.format(self.lang, self.lang)
         return self._create_examples(read_json(os.path.join(data_dir, filename)), "test")
 
-    def get_labels(self, data_dir):
+    def get_test_options(self, data_dir):
+        filename = '{}/{}.json'.format(self.lang, self.lang)
+        items = read_json(os.path.join(data_dir, filename))
+        candidates, answers = {}, {}
+        for i, item in enumerate(items):
+            candidates[i] = item['options']
+            answers[i] = item['options'].index(item['answer'])
+        return (candidates, answers)
+
+    def get_labels(self):
         """See base class."""
-        return ["0", "1", "2", "3"]
+        return list(range(100000))
 
     def _create_examples(self, items, set_type):
         """Creates examples for the training and dev sets."""
