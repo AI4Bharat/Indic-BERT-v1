@@ -42,16 +42,14 @@ class MEPTransformer(LightningBase):
 
     def test(self):
 
-        for example in self.processors.get_test_examples(self.hparams.data_dir):
-            tokenized_text = self.tokenizer.tokenize(example['question'])
-	    masked_index = tokenized_text.index('[MASK]')
+	mask_id = tokenizer.convert_tokens_to_ids('[MASK]')
 
+        for example in self.processors.get_test_examples(self.hparams.data_dir):
 	    candidates = example['candidates']
 	    candidates = [max(self.tokenizer.tokenize(cand), key=lambda t: len(t.strip(string.punctuation)))
 		          for cand in candidates]
             candidates_ids = self.tokenizer.convert_tokens_to_ids(candidates)
 
-            tokenizer.convert_tokens_to_ids('[MASK]')
 
             indexed_tokens = tokenizer.convert_tokens_to_ids(tokenized_text)
             segments_ids = [0] * len(tokenized_text)
@@ -113,4 +111,5 @@ if __name__ == "__main__":
         os.makedirs(args.output_dir)
 
     model = MEPTransformer(args)
+    print(model.test())
 
