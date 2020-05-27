@@ -9,7 +9,7 @@ from seqeval.metrics import f1_score, precision_score, recall_score
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader, TensorDataset
 
-from ..transformer_base import LightningBase, add_generic_args, generic_train
+from ..transformer_base import LightningBase, add_generic_args, create_trainer
 from .utils_ner import convert_examples_to_features, get_labels, read_examples_from_file
 
 
@@ -48,14 +48,14 @@ class NERTransformer(LightningBase):
     def prepare_data(self):
         "Called to initialize data. Use the call to construct features"
         args = self.hparams
-        for mode in ["train", "dev", "test"]:
+        for mode in ["train", "valid", "test"]:
             cached_features_file = self._feature_file(mode)
             if os.path.exists(cached_features_file) and not args.overwrite_cache:
                 logger.info("Loading features from cached file %s", cached_features_file)
                 features = torch.load(cached_features_file)
             else:
                 logger.info("Creating features from dataset file at %s", args.data_dir)
-                examples = read_examples_from_file(args.data_dir, mode)
+                examples = read_examples_from_file(args.data_dir, args.lang, mode)
                 features = convert_examples_to_features(
                     examples,
                     self.labels,
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     parser = NERTransformer.add_model_specific_args(parser, os.getcwd())
     args = parser.parse_args()
     model = NERTransformer(args)
-    trainer = generic_train(model, args)
+    trainer = create_trainer(model, args)
 
     if args.do_train:
        trainer.fit(model)

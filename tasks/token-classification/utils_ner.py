@@ -58,10 +58,8 @@ class InputFeatures:
     label_ids: Optional[List[int]] = None
 
 
-def read_examples_from_file(data_dir, mode: Union[Split, str]) -> List[InputExample]:
-    if isinstance(mode, Split):
-        mode = mode.value
-    file_path = os.path.join(data_dir, f"{mode}.txt")
+def read_examples_from_file(data_dir, lang, mode) -> List[InputExample]:
+    file_path = os.path.join(data_dir, lang, f"{mode}.txt")
     guid_index = 1
     examples = []
     with open(file_path, encoding="utf-8") as f:
