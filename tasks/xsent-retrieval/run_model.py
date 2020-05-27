@@ -9,6 +9,7 @@ import pickle
 import threading
 import sys
 import scipy.spatial as sp
+from sklearn.linear_model import LinearRegression
 from filelock import FileLock
 
 import numpy as np
@@ -96,8 +97,21 @@ class SentEncodingTransformer(LightningBase):
 
 def compute_accuracy(sentvecs1, sentvecs2):
     n = sentvecs1.shape[0]
+
+    # mean centering
+    # sentvecs1 = sentvecs1 - np.mean(sentvecs1, axis=0)
+    # sentvecs2 = sentvecs2 - np.mean(sentvecs2, axis=0)
+
+    # linear transform sentvecs1
+    # reg = LinearRegression().fit(sentvecs1[:1000,:], sentvecs2[:1000,:])
+    # sentvecs1 = reg.predict(sentvecs1[1000:,:])
+    # sentvecs2 = sentvecs2[1000:,:]
+
+    # print(sentvecs1.shape)
+    # print(sentvecs2.shape)
+
     sim = sp.distance.cdist(sentvecs1, sentvecs2, 'cosine')
-    actual = np.array(range(n))
+    actual = np.array(range(n-1000))
     preds = sim.argsort(axis=1)[:, :100]
     matches = np.any(preds == actual[:, None], axis=1)
     return matches.mean()
