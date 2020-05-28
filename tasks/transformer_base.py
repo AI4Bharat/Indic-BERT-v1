@@ -89,18 +89,17 @@ class LightningBase(pl.LightningModule):
             config=self.config,
             cache_dir=cache_dir,
         )
-        from_tf=bool(".ckpt" in self.hparams.model_name_or_path)
+        from_pt=bool(".bin" in self.hparams.model_name_or_path)
 
-        if from_tf:
-            self.model = MODEL_MODES[mode].from_config(self.config)
-            load_tf_weights_in_albert(self.model, self.config, self.hparams.model_name_or_path)
-        else:
-            self.model = MODEL_MODES[mode].from_pretrained(
-                self.hparams.model_name_or_path,
-                from_tf=from_tf,
-                config=self.config,
-                cache_dir=cache_dir,
-            )
+        # if from_pt:
+        #    self.model = MODEL_MODES[mode].from_config(self.config)
+        #    load_tf_weights_in_albert(self.model, self.config, self.hparams.model_name_or_path)
+        # else:
+        self.model = MODEL_MODES[mode].from_pretrained(
+            self.hparams.model_name_or_path,
+            config=self.config,
+            cache_dir=cache_dir,
+        )
         
     def is_logger(self):
         return self.trainer.proc_rank <= 0
