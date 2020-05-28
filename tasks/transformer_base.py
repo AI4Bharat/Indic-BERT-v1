@@ -13,6 +13,7 @@ import pytorch_lightning as pl
 import torch
 import torch_xla.core.xla_model as xm
 from torch.utils.data import DataLoader, TensorDataset
+from transformers.modeling_albert import load_tf_weights_in_albert
 
 from transformers import (
     AdamW,
@@ -85,14 +86,21 @@ class LightningBase(pl.LightningModule):
         )
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.hparams.tokenizer_name if self.hparams.tokenizer_name else self.hparams.model_name_or_path,
-            cache_dir=cache_dir,
-        )
-        self.model = MODEL_MODES[mode].from_pretrained(
-            self.hparams.model_name_or_path,
-            from_tf=bool(".ckpt" in self.hparams.model_name_or_path),
             config=self.config,
             cache_dir=cache_dir,
         )
+        from_tf=bool(".ckpt" in self.hparams.model_name_or_path)
+
+        if from_tf:
+            self.model = MODEL_MODES[mode].from_config(self.config)
+            load_tf_weights_in_albert(self.model, self.config, self.hparams.model_name_or_path)
+        else:
+            self.model = MODEL_MODES[mode].from_pretrained(
+                self.hparams.model_name_or_path,
+                from_tf=from_tf,
+                config=self.config,
+                cache_dir=cache_dir,
+            )
         
     def is_logger(self):
         return self.trainer.proc_rank <= 0
@@ -143,7 +151,7 @@ class LightningBase(pl.LightningModule):
     def test_step(self, batch, batch_nb):
         return self.validation_step(batch, batch_nb)
 
-    def cached_loader(self, mode, batch_size):
+    def load_dataset(self, mode, batch_size):
         cached_features_file = self._feature_file(mode)
         if os.path.exists(cached_features_file) and not self.hparams.overwrite_cache:
             features = torch.load(cached_features_file)
@@ -154,7 +162,7 @@ class LightningBase(pl.LightningModule):
 
     def train_dataloader(self):
         train_batch_size = self.hparams.train_batch_size
-        dataloader = self.cached_loader("train", train_batch_size)
+        dataloader = self.load_dataset("train", train_batch_size)
 
         t_total = (
             (len(dataloader.dataset) // (train_batch_size * max(1, self.hparams.n_gpu)))
@@ -168,18 +176,19 @@ class LightningBase(pl.LightningModule):
         return dataloader
 
     def val_dataloader(self):
-        return self.cached_loader("dev", self.hparams.eval_batch_size)
+        return self.load_dataset("valid", self.hparams.eval_batch_size)
 
     def validation_step(self, batch, batch_nb):
         raise NotImplementedError
 
     def test_dataloader(self):
-        return self.cached_loader("dev", self.hparams.eval_batch_size)
+        return self.load_dataset("test", self.hparams.eval_batch_size)
 
     def _feature_file(self, mode):
         return os.path.join(
             self.hparams.data_dir,
-            "cached_{}_{}_{}".format(
+            "cached_{}_{}_{}_{}".format(
+                self.hparams.lang,
                 mode,
                 list(filter(None, self.hparams.model_name_or_path.split("/"))).pop(),
                 str(self.hparams.max_seq_length),
