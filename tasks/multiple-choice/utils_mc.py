@@ -81,30 +81,35 @@ class WSTPProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir):
         """See base class."""
-        filename = '{}/{}-train.csv'.format(self.lang, self.lang)
-        return self._create_examples(read_csv(os.path.join(data_dir, filename)), "train")
+        filename = '{}/{}-train.json'.format(self.lang, self.lang)
+        return self._create_examples(read_json(os.path.join(data_dir, filename)), "train")
 
-    def get_dev_examples(self, data_dir):
+    def get_valid_examples(self, data_dir):
         """See base class."""
-        filename = '{}/{}-test.csv'.format(self.lang, self.lang)
-        return self._create_examples(read_csv(os.path.join(data_dir, filename)), "dev")
+        filename = '{}/{}-valid.json'.format(self.lang, self.lang)
+        return self._create_examples(read_json(os.path.join(data_dir, filename)), "valid")
 
-    def get_labels(self, data_dir):
+    def get_test_examples(self, data_dir):
         """See base class."""
-        filename = '{}/{}-train.csv'.format(self.lang, self.lang)
-        lines = read_csv(os.path.join(data_dir, filename))
-        labels = map(lambda l: l[0], lines)
-        labels = list(set(labels))
-        return labels
+        filename = '{}/{}-test.json'.format(self.lang, self.lang)
+        return self._create_examples(read_json(os.path.join(data_dir, filename)), "test")
 
-    def _create_examples(self, lines, set_type):
+    def get_labels(self):
+        """See base class."""
+        return ["titleA", "titleB", "titleC", "titleD"]
+
+    def _create_examples(self, items, set_type):
         """Creates examples for the training and dev sets."""
-        examples = []
-        for (i, line) in enumerate(lines):
-            guid = "%s-%s" % (set_type, i)
-            text_a = line[1]
-            label = line[0]
-            examples.append(InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+        examples = [
+            InputExample(
+                example_id=idx,
+                question="",
+                contexts=[item['sectionText'], item['sectionText'], item['sectionText'], item['sectionText']],
+                endings=[item['titleA'], item['titleB'], item['titleC'], item['titleD']],
+                label=item['correctTitle'],
+            )
+            for idx, item in enumerate(items)
+        ]
         return examples
 
 
@@ -123,7 +128,12 @@ class HPProcessor(DataProcessor):
         filename = '{}/{}-train.json'.format(self.lang, self.lang)
         return self._create_examples(read_json(os.path.join(data_dir, filename)), "train")
 
-    def get_dev_examples(self, data_dir):
+    def get_valid_examples(self, data_dir):
+        """See base class."""
+        filename = '{}/{}-valid.json'.format(self.lang, self.lang)
+        return self._create_examples(read_json(os.path.join(data_dir, filename)), "valid")
+
+    def get_test_examples(self, data_dir):
         """See base class."""
         filename = '{}/{}-test.json'.format(self.lang, self.lang)
         return self._create_examples(read_json(os.path.join(data_dir, filename)), "test")

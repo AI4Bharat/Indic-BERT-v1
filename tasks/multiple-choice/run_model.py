@@ -56,8 +56,10 @@ class MCTransformer(LightningBase):
     def load_features(self, mode):
         if mode == "train":
             examples = self.processor.get_train_examples(self.hparams.data_dir)
-        elif mode == "dev":
-            examples = self.processor.get_dev_examples(self.hparams.data_dir)
+        elif mode == "valid":
+            examples = self.processor.get_valid_examples(self.hparams.data_dir)
+        elif mode == "test":
+            examples = self.processor.get_test_examples(self.hparams.data_dir)
         else:
             raise "Invalid mode"
 
@@ -70,7 +72,7 @@ class MCTransformer(LightningBase):
         return features
 
     def prepare_data(self):
-        for mode in ["train", "dev"]:
+        for mode in ["train", "valid", "test"]:
             cached_features_file = self._feature_file(mode)
             if not os.path.exists(cached_features_file) or self.hparams.overwrite_cache:
                 features = self.load_features(mode)
