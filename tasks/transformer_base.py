@@ -11,6 +11,8 @@ import copy
 import numpy as np
 import pytorch_lightning as pl
 import torch
+import torch.nn as nn
+from torch.nn import CrossEntropyLoss, MSELoss
 import torch_xla.core.xla_model as xm
 from torch.utils.data import DataLoader, TensorDataset
 from transformers.modeling_albert import load_tf_weights_in_albert
@@ -28,7 +30,7 @@ from transformers import (
     AutoTokenizer,
     get_linear_schedule_with_warmup,
 )
-from transformers.modeling_albert import AlbertPreTrainedModel
+from transformers.modeling_albert import AlbertPreTrainedModel, AlbertModel
 
 
 logger = logging.getLogger(__name__)
@@ -72,7 +74,7 @@ class AlbertForMultipleChoice(AlbertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
 
-        self.bert = BertModel(config)
+        self.albert = AlbertModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, 1)
 
@@ -127,7 +129,7 @@ class AlbertForMultipleChoice(AlbertPreTrainedModel):
         token_type_ids = token_type_ids.view(-1, token_type_ids.size(-1)) if token_type_ids is not None else None
         position_ids = position_ids.view(-1, position_ids.size(-1)) if position_ids is not None else None
 
-        outputs = self.bert(
+        outputs = self.albert(
             input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
