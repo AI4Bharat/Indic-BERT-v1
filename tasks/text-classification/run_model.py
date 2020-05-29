@@ -44,7 +44,7 @@ class TCTransformer(LightningBase):
     def load_features(self, mode):
         if mode == "train":
             examples = self.processor.get_train_examples(self.hparams.data_dir)
-        elif mode == "dev":
+        elif mode in ['valid', 'test']:
             examples = self.processor.get_dev_examples(self.hparams.data_dir)
         else:
             raise "Invalid mode"
