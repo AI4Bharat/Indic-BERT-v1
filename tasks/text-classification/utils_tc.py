@@ -2,6 +2,7 @@
 import csv
 import os
 
+from indicnlp.transliterate.script_unifier import BasicScriptUnifier
 from transformers.data.processors.utils import DataProcessor
 from transformers.data.processors.utils import InputExample, InputFeatures
 from transformers import glue_convert_examples_to_features as convert_examples_to_features
@@ -15,8 +16,10 @@ def read_csv(filepath):
 class AGCProcessor(DataProcessor):
     """Processor for the Article Genre Classification data set"""
 
-    def __init__(self, lang):
+    def __init__(self, lang, translit=False):
         self.lang = lang
+        self.translit = translit
+        self.unifier = BasicScriptUnifier()
 
     def get_train_examples(self, data_dir):
         """See base class."""
@@ -40,6 +43,10 @@ class AGCProcessor(DataProcessor):
         """Creates examples for the training and dev sets."""
         examples = []
         for (i, line) in enumerate(lines):
+            if self.translit:
+                line[1] = self.unifier.transform(line[1], self.lang)
+                line[0] = self.unifier.transform(line[0], self.lang)
+
             guid = "%s-%s" % (set_type, i)
             text_a = line[1]
             label = line[0]
