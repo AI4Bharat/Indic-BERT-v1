@@ -27,12 +27,12 @@ class MKBProcessor:
 
     def get_examples_en(self, data_dir):
         """Get examples of English language"""
-        filename = 'cvit-mkb/en-{}/mkb.en'.format(self.lang)
+        filename = 'en-{}/mkb.en'.format(self.lang)
         return self._create_examples(readlines(os.path.join(data_dir, filename)), "en")
     
     def get_examples_in(self, data_dir):
         """Get examples of the Indian language"""
-        filename = 'cvit-mkb/en-{}/mkb.{}'.format(self.lang, self.lang)
+        filename = 'en-{}/mkb.{}'.format(self.lang, self.lang)
         return self._create_examples(readlines(os.path.join(data_dir, filename)), "in")
 
     def _create_examples(self, lines, set_type):
@@ -41,6 +41,6 @@ class MKBProcessor:
         for (i, line) in enumerate(lines):
             guid = "%s-%s" % (set_type, i)
             text_a = line
-            label = "0"
+            label = i
             examples.append(InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
         return examples

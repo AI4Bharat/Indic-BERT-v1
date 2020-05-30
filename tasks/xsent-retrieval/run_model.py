@@ -9,7 +9,6 @@ import pickle
 import threading
 import sys
 import scipy.spatial as sp
-from sklearn.linear_model import LinearRegression
 from filelock import FileLock
 
 import numpy as np
@@ -40,7 +39,7 @@ class SentEncodingTransformer(LightningBase):
     def forward(self, **inputs):
         outputs = self.model(**inputs)
         last_hidden = outputs[0]
-        last_hidden = last_hidden[:, :32, :]
+        # last_hidden = last_hidden[:, :32, :]
         mean_pooled = torch.mean(last_hidden, 1)
         return mean_pooled
 
@@ -56,22 +55,24 @@ class SentEncodingTransformer(LightningBase):
             examples,
             self.tokenizer,
             max_length=self.hparams.max_seq_length,
-            label_list=["0"],
+            label_list=range(20000),
             output_mode=self.output_mode,
         )
         return features
 
     def test_dataloader_en(self):
-        return self.cached_loader("en", 32)
+        return self.load_dataset("en", 32)
 
     def test_dataloader_in(self):
-        return self.cached_loader("in", 32)
+        return self.load_dataset("in", 32)
 
     def test_step(self, batch, batch_idx):
         inputs = {"input_ids": batch[0], "token_type_ids": batch[2],
                   "attention_mask": batch[1]}
+        labels = batch[3].detach().cpu().numpy()
         sentvecs = self(**inputs)
         sentvecs = sentvecs.detach().cpu().numpy()
+        sentvecs = np.hstack([labels[:, None], sentvecs])
 
         return {"sentvecs": sentvecs}
 
@@ -103,17 +104,9 @@ def compute_accuracy(sentvecs1, sentvecs2):
     sentvecs1 = sentvecs1 - np.mean(sentvecs1, axis=0)
     sentvecs2 = sentvecs2 - np.mean(sentvecs2, axis=0)
 
-    # linear transform sentvecs1
-    # reg = LinearRegression().fit(sentvecs1[:1000,:], sentvecs2[:1000,:])
-    # sentvecs1 = reg.predict(sentvecs1[1000:,:])
-    # sentvecs2 = sentvecs2[1000:,:]
-
-    # print(sentvecs1.shape)
-    # print(sentvecs2.shape)
-
     sim = sp.distance.cdist(sentvecs1, sentvecs2, 'cosine')
     actual = np.array(range(n))
-    preds = sim.argsort(axis=1)[:, :100]
+    preds = sim.argsort(axis=1)[:, :10]
     matches = np.any(preds == actual[:, None], axis=1)
     return matches.mean()
 
@@ -143,5 +136,10 @@ if __name__ == "__main__":
     trainer.test(model, model.test_dataloader_in())
     sentvecs2 = pickle.load(open(model.test_results_fpath, 'rb'))
 
-    print('Accuracy: ', compute_accuracy(sentvecs1, sentvecs2))
+    sentvecs1 = sentvecs1[sentvecs1[:,0].argsort()]
+    sentvecs2 = sentvecs2[sentvecs2[:,0].argsort()]
+
+    with open(os.path.join(args.output_dir, 'test_results.txt'), 'w') as fp:
+        metrics = {'test_acc': compute_accuracy(sentvecs1, sentvecs2))
+        json.dump(metrics, fp)
 
