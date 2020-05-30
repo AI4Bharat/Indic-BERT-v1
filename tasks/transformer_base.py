@@ -233,8 +233,11 @@ class LightningBase(pl.LightningModule):
         return tqdm_dict
 
     def training_step(self, batch, batch_idx):
-        inputs = {"input_ids": batch[0], "token_type_ids": batch[2],
-                  "attention_mask": batch[1], "labels": batch[3]}
+        inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
+        if self.config.model_type != "distilbert":
+            inputs["token_type_ids"] = (
+                batch[2] if self.config.model_type in ["bert", "xlnet", "albert"] else None
+            )  # XLM and RoBERTa don"t use token_type_ids
 
         outputs = self(**inputs)
         loss = outputs[0]
