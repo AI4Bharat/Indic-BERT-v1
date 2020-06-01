@@ -21,11 +21,11 @@ class MEPProcessor(DataProcessor):
 
     def get_test_examples(self, data_dir):
         """See base class."""
-        filename = '{}/{}.json'.format(self.lang, self.lang)
+        filename = '{}.json'.format(self.lang, self.lang)
         return self._create_examples(read_json(os.path.join(data_dir, filename)), "test")
 
     def get_test_options(self, data_dir):
-        filename = '{}/{}.json'.format(self.lang, self.lang)
+        filename = '{}.json'.format(self.lang, self.lang)
         items = read_json(os.path.join(data_dir, filename))
         candidates, answers = {}, {}
         for i, item in enumerate(items):
@@ -35,14 +35,22 @@ class MEPProcessor(DataProcessor):
 
     def get_labels(self):
         """See base class."""
-        return list(range(100000))
+        return list(range(4))
 
     def _create_examples(self, items, set_type):
         """Creates examples for the training and dev sets."""
         examples = []
+        candidates = []
+        answers = []
+        ids = []
         for (i, item) in enumerate(items):
+            if 0 in [len(option.strip()) for option in item['options']]:
+                continue
             guid = "%s-%s" % (set_type, i)
             text_a = item["question"].replace('<MASK>', '[MASK]')
-            label = i   # represent the index of example
+            label = 0   # represent the index of example
             examples.append(InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
-        return examples
+            candidates.append(item['options'])
+            answers.append(item['options'].index(item['answer']))
+            ids.append(i)
+        return examples, ids, candidates, answers
