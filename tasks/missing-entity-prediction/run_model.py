@@ -58,8 +58,13 @@ class MEPTransformer(LightningBase):
         
         candidates_ids = []
         for i, candidate in enumerate(candidates):
-            candidate = [max(self.tokenizer.tokenize(cand), key=lambda t: len(t.strip(string.punctuation)))
-                         for cand in candidate]
+            tokens = [self.tokenizer.tokenize(cand) for cand in candidate]
+            candidate = []
+            for toks in tokens:
+                if len(toks) == 0:
+                    candidate.append(self.tokenizer.unk_token)
+                else:
+                    candidate.append(max(toks, key=lambda t: len(t.strip(string.punctuation))))
             candidate_ids = self.tokenizer.convert_tokens_to_ids(candidate)
             candidates_ids.append(candidate_ids)
 
