@@ -15,4 +15,5 @@ spm_train \
   --model_prefix="$OUTPUT_DIR/spm.unigram" --vocab_size="$VOCAB_SIZE" \
   --pad_id=0 --unk_id=1 --eos_id=-1 --bos_id=-1 \
   --control_symbols=[CLS],[SEP],[MASK] \
+  --shuffle_input_sentence=true \
   --character_coverage=0.99995 --model_type=unigram
