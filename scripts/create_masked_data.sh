@@ -5,14 +5,14 @@ if [ $# != 2 ]; then
     exit
 fi
 
-MTXT_FILE="$1/multilingual.txt"
+TRAIN_FILE="$1/train.txt"
 OUTPUT_DIR="$2"
 shards_dir="$OUTPUT_DIR/shards"
 data_dir="$OUTPUT_DIR/pretrain"
 
 # create shards
 mkdir "$shards_dir"
-split --lines=500000 "$MTXT_FILE" "$shards_dir"
+split --lines=500000 "$TRAIN_FILE" "$shards_dir"
 
 mkdir "$data_dir"
 

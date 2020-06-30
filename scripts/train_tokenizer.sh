@@ -6,11 +6,12 @@ if [ $# != 3 ]; then
 fi
 
 VOCAB_SIZE="$1"
-MTXT_FILE="$2/multilingual.txt"
+DATA_DIR="$2"
 OUTPUT_DIR="$3"
+TRAIN_FILE="$DATA_DIR/train_small.txt"
 
 spm_train \
-  --input "$MTXT_FILE"\
+  --input "$TRAIN_FILE"\
   --model_prefix="$OUTPUT_DIR/spm.unigram" --vocab_size="$VOCAB_SIZE" \
   --pad_id=0 --unk_id=1 --eos_id=-1 --bos_id=-1 \
   --control_symbols=[CLS],[SEP],[MASK] \
