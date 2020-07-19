@@ -6,7 +6,10 @@ import collections
 
 def get_lang(w):
     try:
-        lang = ud.name(w[0]).split()[0]
+        if w[0] == '▁':
+            lang = ud.name(w[1]).split()[0]
+        else:
+            lang = ud.name(w[0]).split()[0]
         return lang
     except:
         return 'unk'
