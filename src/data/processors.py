@@ -48,8 +48,8 @@ class DataProcessor:
     @classmethod
     def read_json(cls, input_file):
         """Reads a json file file."""
-        with open(input_file, encoding='utf-8'):
-            return json.load(input_file)
+        with open(input_file, encoding='utf-8') as fp:
+            return json.load(fp)
 
     @classmethod
     def readlines(filepath):
@@ -115,7 +115,7 @@ class WikiCloze(DataProcessor):
         """See base class."""
         fname = '{}.json'.format(lang, lang)
         fpath = os.path.join(self.data_dir, fname)
-        return self._create_examples(self.read_json(fpath), 'test')
+        return self._create_examples(self.read_json(fpath)['cloze_data'], 'test')
 
     def get_labels(self, lang):
         """See base class."""
@@ -146,13 +146,13 @@ class IndicNLPGenre(DataProcessor):
 
     def get_train_examples(self, lang):
         """See base class."""
-        fname = '{}/{}-test.csv'.format(lang, lang)
+        fname = '{}/{}-train.csv'.format(lang, lang)
         fpath = os.path.join(self.data_dir, fname)
         return self._create_examples(self.read_csv(fpath), 'train')
 
     def get_dev_examples(self, lang):
         """See base class."""
-        fname = '{}/{}-test.csv'.format(lang, lang)
+        fname = '{}/{}-valid.csv'.format(lang, lang)
         fpath = os.path.join(self.data_dir, fname)
         return self._create_examples(self.read_csv(fpath), 'dev')
 

@@ -141,13 +141,14 @@ def main():
     for module in get_modules():
         module.add_model_specific_args(parser, os.getcwd())
     args = parser.parse_args()
-    params = vars(args)
+    hparams = vars(args)
 
-    print(params)
+    print(hparams)
 
-    module_class = get_modules(params['module_name'])
-    module = module_class(params)
+    module_class = get_modules(hparams['module_name'])
+    module = module_class(hparams)
     module.run_module()
 
 
-main()
+if __name__ == '__main__':
+    main()

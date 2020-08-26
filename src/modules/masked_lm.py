@@ -19,6 +19,7 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 from .base import BaseModule, create_trainer
+from ..data.examples import InputFeatures
 from collections import ChainMap
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -32,8 +33,8 @@ class MaskedLM(BaseModule):
     output_mode = 'classification'
     example_type = 'multiple-choice'
 
-    def __init__(self, params):
-        super().__init__(params)
+    def __init__(self, hparams):
+        super().__init__(hparams)
 
         self.mask_id = self.tokenizer.convert_tokens_to_ids('[MASK]')
         self.test_results_fpath = 'test_results'
@@ -42,9 +43,9 @@ class MaskedLM(BaseModule):
 
     def convert_examples_to_features(self, examples):
 
-        batch_encoding = tokenizer(
+        batch_encoding = self.tokenizer(
             [(example.question, None) for example in examples],
-            max_length=self.params['max_seq_length'],
+            max_length=self.hparams['max_seq_length'],
             padding='max_length',
             truncation=True,
         )
@@ -66,28 +67,27 @@ class MaskedLM(BaseModule):
             feature = InputFeatures(**inputs, candidates=candidate_ids, label=examples[i].label)
             features.append(feature)
 
-        torch.save(features, cached_features_file)
         return features
 
     def test_dataloader(self):
         mode = 'test'
         cached_features_file = self._feature_file(mode)
-        if os.path.exists(cached_features_file) and not self.hparams.overwrite_cache:
+        if os.path.exists(cached_features_file) and not self.hparams['overwrite_cache']:
             features = torch.load(cached_features_file)
         else:
             features = self.load_features(mode)
             torch.save(features, cached_features_file)
 
-        all_input_ids = torch.tensor([f[0].input_ids for f in features], dtype=torch.long)
-        all_attention_mask = torch.tensor([f[0].attention_mask for f in features], dtype=torch.long)
-        all_token_type_ids = torch.tensor([f[0].token_type_ids or 0 for f in features], dtype=torch.long)
-        all_labels = torch.tensor([f[1] for f in features], dtype=torch.long)
-        all_cands  = torch.tensor([f[2] for f in features], dtype=torch.long)
-        all_answers  = torch.tensor([f[3] for f in features], dtype=torch.long)
+        all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
+        all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
+        all_token_type_ids = torch.tensor([f.token_type_ids or 0 for f in features], dtype=torch.long)
+        all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
+        all_cands  = torch.tensor([f.candidates for f in features], dtype=torch.long)
+        all_answers  = torch.tensor([f.label for f in features], dtype=torch.long)
 
         return DataLoader(
             TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels, all_cands, all_answers),
-            batch_size=self.hparams.eval_batch_size,
+            batch_size=self.hparams['eval_batch_size'],
         )
 
     def test_step(self, batch, batch_idx):
@@ -146,10 +146,10 @@ class MaskedLM(BaseModule):
         self.freeze()
         torch.no_grad()
 
-        trainer = create_trainer(model, args)
+        trainer = create_trainer(self, self.hparams)
 
-        trainer.test(model)
-        preds = pickle.load(open(model.test_results_fpath, 'rb'))
+        trainer.test(self)
+        preds = pickle.load(open(self.test_results_fpath, 'rb'))
         correct, wrong = preds['right'], preds['wrong']
-        with open(os.path.join(args.output_dir, 'test_results.txt'), 'w') as fp:
+        with open(os.path.join(self.hparams['output_dir'], 'test_results.txt'), 'w') as fp:
             json.dump({'test_acc': correct/(correct + wrong)}, fp)

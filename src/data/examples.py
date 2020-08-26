@@ -74,12 +74,12 @@ class InputFeatures:
     A single set of features of data.
     Property names are the same names as the corresponding inputs to a model.
     """
-    example_id: str
     input_ids: Any
     attention_mask: Any
-    token_type_ids = None
-    label = None
-    candidates = None
+    token_type_ids: Any = None
+    label: Any = None
+    candidates: Any = None
+    example_id: str = None
 
 
 def convert_multiple_choice_examples_to_features(
