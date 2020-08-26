@@ -96,7 +96,7 @@ class XSentRetrieval(BaseModule):
         sentvecs2 = sentvecs2[sentvecs2[:,0].argsort()]
 
         with open(os.path.join(args.output_dir, 'test_results.txt'), 'w') as fp:
-            metrics = {'test_acc': precision_at_10(sentvecs1, sentvecs2))
+            metrics = {'test_acc': precision_at_10(sentvecs1, sentvecs2)}
             json.dump(metrics, fp)
 
 

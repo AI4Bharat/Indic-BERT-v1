@@ -18,8 +18,7 @@ import pickle
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-from .base import BaseModule create_trainer
-from .utils_mep import MEPProcessor, convert_examples_to_features
+from .base import BaseModule, create_trainer
 from collections import ChainMap
 from torch.utils.data import DataLoader, TensorDataset
 

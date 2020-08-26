@@ -42,8 +42,8 @@ class DataProcessor:
     @classmethod
     def read_csv(cls, input_file, quotechar=None):
         """Reads a tab separated value file."""
-        with open(input_file, 'r', encoding='utf-8-sig') as f:
-            return list(csv.reader(f, delimiter=',', quotechar=quotechar))
+        with open(input_file, encoding='utf-8') as fp:
+            return list(csv.reader(fp, delimiter=','))
 
     @classmethod
     def read_json(cls, input_file):
@@ -146,24 +146,24 @@ class IndicNLPGenre(DataProcessor):
 
     def get_train_examples(self, lang):
         """See base class."""
-        fname = '{}/{}-test.json'.format(lang, lang)
+        fname = '{}/{}-test.csv'.format(lang, lang)
         fpath = os.path.join(self.data_dir, fname)
         return self._create_examples(self.read_csv(fpath), 'train')
 
     def get_dev_examples(self, lang):
         """See base class."""
-        fname = '{}/{}-test.json'.format(lang, lang)
+        fname = '{}/{}-test.csv'.format(lang, lang)
         fpath = os.path.join(self.data_dir, fname)
-        return self._create_examples(self.read_json(fpath), 'dev')
+        return self._create_examples(self.read_csv(fpath), 'dev')
 
     def get_test_examples(self, lang):
-        fname = '{}/{}-test.json'.format(lang, lang)
+        fname = '{}/{}-test.csv'.format(lang, lang)
         fpath = os.path.join(self.data_dir, fname)
-        return self._create_examples(self.read_json(fpath), 'test')
+        return self._create_examples(self.read_csv(fpath), 'test')
 
     def get_labels(self, lang):
         """See base class."""
-        filename = '{}/{}-train.csv'.format(self.lang, self.lang)
+        filename = '{}/{}-train.csv'.format(lang, lang)
         lines = self.read_csv(os.path.join(self.data_dir, filename))
         labels = map(lambda l: l[0], lines)
         labels = list(set(labels))
@@ -221,7 +221,7 @@ class WikiNER(DataProcessor):
                 labels=labels
             )
             examples.append(TokensExample)
-    return examples
+        return examples
 
     def get_labels(self):
         pass

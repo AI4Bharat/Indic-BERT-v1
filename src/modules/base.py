@@ -27,7 +27,8 @@ from transformers import (
     get_linear_schedule_with_warmup,
 )
 
-from ..data.processors import get_processor
+from ..data import load_dataset
+from ..data.examples import *
 
 
 logger = logging.getLogger(__name__)
@@ -51,12 +52,12 @@ def get_model_class(model_type, mode):
         return MODEL_MODES[mode]
 
 
-def set_seed(args: argparse.Namespace):
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    if args.n_gpu > 0:
-        torch.cuda.manual_seed_all(args.seed)
+def set_seed(params):
+    random.seed(params['seed'])
+    np.random.seed(params['seed'])
+    torch.manual_seed(params['seed'])
+    if params['n_gpu'] > 0:
+        torch.cuda.manual_seed_all(params['seed'])
 
 
 class AlbertForMultipleChoice(AlbertPreTrainedModel):
@@ -134,14 +135,18 @@ class BaseModule(pl.LightningModule):
 
         params['mode'] = self.mode
         params['output_mode'] = self.output_mode
+        params['example_type'] = self.example_type
+        params['dev_lang'] = params['train_lang']
         self.params = params  # must come after super
         self.dataset = load_dataset(params['dataset'], params['data_dir'])
+        if self.output_mode == 'classification':
+            self.labels = self.dataset.get_labels(params['train_lang'])
 
         # setup config object
         config_name = params['config_name'] or params['model_name_or_path']
         args = {}
         if self.output_mode == 'classification':
-            params['num_labels'] = self.dataset.get_labels(params['train_lang'])
+            params['num_labels'] = len(self.dataset.get_labels(params['train_lang']))
             args = {'num_labels': params['num_labels']}
 
         self.config = AutoConfig.from_pretrained(
@@ -161,7 +166,7 @@ class BaseModule(pl.LightningModule):
         # setup transformer model
         model_class = get_model_class(self.config.model_type, params['mode'])
         self.model = model_class.from_pretrained(
-            params['model_https://news.ycombinator.com/name_or_path'],
+            params['model_name_or_path'],
             config=self.config,
             cache_dir=params['cache_dir'],
         )
@@ -175,12 +180,12 @@ class BaseModule(pl.LightningModule):
         for mode in modes:
             cached_features_file = self._feature_file(mode)
             if not os.path.exists(cached_features_file)\
-                    or self.params.overwrite_cache:
+                    or self.params['overwrite_cache']:
                 self.load_features(mode)
 
     def load_features(self, mode):
         """Load examples and convert them into features"""
-        examples = self.dataset.get_examples(mode)
+        examples = self.dataset.get_examples(self.params['{}_lang'.format(mode)], mode)
         
         cached_features_file = self._feature_file(mode)
         if os.path.exists(cached_features_file)\
@@ -197,14 +202,14 @@ class BaseModule(pl.LightningModule):
             features = convert_multiple_choice_examples_to_features(
                 examples,
                 self.tokenizer,
-                max_length=self.hparams.max_seq_length,
+                max_length=self.params['max_seq_length'],
                 label_list=self.labels
             )
         elif self.params['example_type'] == 'text':
             features = convert_text_examples_to_features(
                 examples,
                 self.tokenizer,
-                max_length=self.hparams.max_seq_length,
+                max_length=self.params['max_seq_length'],
                 label_list=self.labels,
                 output_mode=self.output_mode,
             )
@@ -212,7 +217,7 @@ class BaseModule(pl.LightningModule):
             features = convert_tokens_examples_to_features(
                 examples,
                 self.labels,
-                args.max_seq_length,
+                self.params['max_seq_length'],
                 self.tokenizer,
                 cls_token_at_end=bool(self.config.model_type in ["xlnet"]),
                 cls_token=self.tokenizer.cls_token,
@@ -299,14 +304,17 @@ class BaseModule(pl.LightningModule):
                 'pred': preds,
                 'target': out_label_ids}
 
+    def test_step(self, batch, batch_nb):
+        return self.validation_step(batch, batch_nb)
+
     def _feature_file(self, mode):
         return os.path.join(
-            self.params.data_dir,
+            self.params['data_dir'],
             'cached_{}_{}_{}_{}'.format(
-                self.params.lang,
+                self.params['{}_lang'.format(mode)],
                 mode,
-                list(filter(None, self.params.model_name_or_path.split('/'))).pop(),
-                str(self.params.max_seq_length),
+                list(filter(None, self.params['model_name_or_path'].split('/'))).pop(),
+                str(self.params['max_seq_length']),
             ),
         )
 
@@ -351,14 +359,14 @@ class BaseModule(pl.LightningModule):
         return tqdm_dict
 
     def run_module(self):
-        trainer = create_trainer(model, self.params)
+        trainer = create_trainer(self, self.params)
 
         if self.params['do_train']:
             trainer.fit(self)
 
         # Optionally, predict on dev set and write to output_dir
         if self.params['do_predict']:
-            checkpoints = list(sorted(glob.glob(os.path.join(self.params['output_dir', 'checkpointepoch=*.ckpt'), recursive=True)))
+            checkpoints = list(sorted(glob.glob(os.path.join(self.params['output_dir'], 'checkpointepoch=*.ckpt'), recursive=True)))
             model = model.load_from_checkpoint(checkpoints[-1])
         trainer.test(model)
 
@@ -401,35 +409,35 @@ class LoggingCallback(pl.Callback):
 
 def create_trainer(model, params):
     # init model
-    set_seed(args)
+    set_seed(params)
 
-    if os.path.exists(params['output_dir') and os.listdir(args.output_dir) and args.do_train:
+    if os.path.exists(params['output_dir']) and os.listdir(params['output_dir']) and params['do_train']:
        raise ValueError('Output directory ({}) already exists and is not empty.'.format(args.output_dir))
 
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
-        filepath=args.output_dir, prefix='checkpoint', monitor='val_loss', mode='min', save_top_k=5
+        filepath=params['output_dir'], prefix='checkpoint', monitor='val_loss', mode='min', save_top_k=5
     )
 
     train_params = dict(
-        accumulate_grad_batches=args.gradient_accumulation_steps,
-        gpus=args.n_gpu,
-        max_epochs=args.num_train_epochs,
+        accumulate_grad_batches=params['gradient_accumulation_steps'],
+        gpus=params['n_gpu'],
+        max_epochs=params['num_train_epochs'],
         early_stop_callback=False,
-        gradient_clip_val=args.max_grad_norm,
+        gradient_clip_val=params['max_grad_norm'],
         checkpoint_callback=checkpoint_callback,
         callbacks=[LoggingCallback()],
         verbose=True
     )
 
-    if args.fp16:
+    if params['fp16']:
         train_params['use_amp'] = params['fp16']
         train_params['amp_level'] = params['fp16_opt_level']
 
-    if args.n_tpu_cores > 0:
+    if params['n_tpu_cores'] > 0:
         train_params['num_tpu_cores'] = params['n_tpu_cores']
         train_params['gpus'] = 0
 
-    if args.n_gpu > 1:
+    if params['n_gpu'] > 1:
         train_params['distributed_backend'] = 'ddp'
 
     trainer = pl.Trainer(**train_params)

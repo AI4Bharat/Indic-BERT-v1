@@ -1,4 +1,5 @@
 import argparse
+import os
 
 from .modules import get_modules
 
@@ -6,26 +7,17 @@ from .modules import get_modules
 def add_generic_args(parser, root_dir):
     # task-specific args START
     parser.add_argument(
-        '--task_name',
-        default=128,
-        type=int,
-        help='The name that identifies the task. It depends on both transformer module and'
-        'the dataset being used.'
+        '--module_name',
+        type=str,
+        required=True,
+        help='The transformer module to use to solve the task'
     )
 
     parser.add_argument(
-        '--module_name',
-        default=128,
-        type=int,
-        help='The transformer module to use to solve the task'
-    )
-    
-    parser.add_argument(
-        '--dataset_name',
-        default=128,
-        type=int,
-        help='The maximum total input sequence length after tokenization. Sequences longer '
-        'than this will be truncated, sequences shorter will be padded.',
+        '--dataset',
+        type=str,
+        required=True,
+        help='The dataset used for fine-tuning and evaluation'
     )
 
     parser.add_argument(
@@ -33,7 +25,7 @@ def add_generic_args(parser, root_dir):
         default=None,
         type=str,
         required=True,
-        help='The language we are dealing with',
+        help='ISO code of train language',
     )
 
     parser.add_argument(
@@ -41,7 +33,7 @@ def add_generic_args(parser, root_dir):
         default=None,
         type=str,
         required=True,
-        help='The language we are dealing with',
+        help='ISO code of test language',
     )
     # task-specific args END
 
@@ -97,7 +89,7 @@ def add_generic_args(parser, root_dir):
 
     parser.add_argument(
         '--cache_dir',
-        default='',
+        default=None,
         type=str,
         help='Where do you want to store the pre-trained models downloaded from s3',
     )
@@ -114,7 +106,7 @@ def add_generic_args(parser, root_dir):
         '--fp16_opt_level',
         type=str,
         default='O1',
-        help='For fp16: Apex AMP optimization level selected in ['O0', 'O1', 'O2', and 'O3'].'
+        help='For fp16: Apex AMP optimization level selected in ["O0", "O1", "O2", and "O3"].'
         'See details at https://nvidia.github.io/apex/amp.html',
     )
 
@@ -149,8 +141,13 @@ def main():
     for module in get_modules():
         module.add_model_specific_args(parser, os.getcwd())
     args = parser.parse_args()
-    params = var(args)
+    params = vars(args)
+
+    print(params)
 
     module_class = get_modules(params['module_name'])
     module = module_class(params)
     module.run_module()
+
+
+main()

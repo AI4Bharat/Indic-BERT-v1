@@ -17,7 +17,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-from ..transformer_base import LightningBase, create_trainer, add_generic_args
+from .base import BaseModule, create_trainer
 from .utils import mean_accuracy
 
 

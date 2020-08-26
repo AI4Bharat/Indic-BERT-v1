@@ -1,5 +1,7 @@
 
-from dataclass import dataclass
+from dataclasses import dataclass
+from typing import Optional, List, Any
+from transformers import PreTrainedTokenizer
 from transformers import glue_convert_examples_to_features as convert_text_examples_to_features
 
 
@@ -72,9 +74,9 @@ class InputFeatures:
     A single set of features of data.
     Property names are the same names as the corresponding inputs to a model.
     """
-    example_id: str = None
-    input_ids
-    attention_mask
+    example_id: str
+    input_ids: Any
+    attention_mask: Any
     token_type_ids = None
     label = None
     candidates = None
@@ -154,7 +156,7 @@ def convert_multiple_choice_examples_to_features(
 
 
 def convert_tokens_examples_to_features(
-    examples: List[InputExample],
+    examples: List[TokensExample],
     label_list: List[str],
     max_seq_length: int,
     tokenizer: PreTrainedTokenizer,
