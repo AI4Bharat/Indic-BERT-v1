@@ -1,5 +1,5 @@
 
-declare -a langs=("bn" "gu" "kn" "ml" "mr" "or" "pa" "ta" "te") 
+declare -a langs=("bn" "gu" "kn" "ml" "mr" "or" "pa" "ta" "te")
 
 for lang in "${langs[@]}"
 do

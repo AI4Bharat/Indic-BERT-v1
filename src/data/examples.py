@@ -1,45 +1,65 @@
-# coding=utf-8
-# Copyright 2018 The Google AI Language Team Authors and The HuggingFace Inc. team.
-# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-""" Named entity recognition fine-tuning: utilities to work with CoNLL-2003 task. """
 
-
-import logging
-import os
-from dataclasses import dataclass
-from enum import Enum
-from typing import List, Optional, Union
-
-from filelock import FileLock
-
-from transformers import PreTrainedTokenizer, is_tf_available, is_torch_available
-
-
-logger = logging.getLogger(__name__)
+from dataclass import dataclass
+from transformers import glue_convert_examples_to_features as convert_text_examples_to_features
 
 
 @dataclass
-class InputExample:
+class TextExample:
+    """
+    A single training/test example for simple sequence classification.
+    Args:
+        guid: Unique id for the example.
+        text_a: string. The untokenized text of the first sequence. For single
+            sequence tasks, only this sequence must be specified.
+        text_b: (Optional) string. The untokenized text of the second sequence.
+            Only must be specified for sequence pair tasks.
+        label: (Optional) string. The label of the example. This should be
+            specified for train and dev examples, but not for test examples.
+    """
+    guid: str
+    text_a: str
+    text_b: Optional[str] = None
+    label: Optional[str] = None
+
+    def to_json_string(self):
+        """Serializes this instance to a JSON string."""
+        return json.dumps(dataclasses.asdict(self), indent=2) + "\n"
+
+
+@dataclass(frozen=True)
+class MultipleChoiceExample:
+    """
+    A single training/test example for multiple choice
+
+    Args:
+        example_id: Unique id for the example.
+        question: string. The untokenized text of the second sequence
+        (question).
+        contexts: list of str. The untokenized text of the first sequence
+        (context of corresponding question).
+        endings: list of str. multiple choice's options. Its length must be
+        equal to contexts' length.
+        label: (Optional) string. The label of the example. This should be
+        specified for train and dev examples, but not for test examples.
+    """
+    example_id: str
+    question: str
+    contexts: List[str]
+    endings: List[str]
+    label: Optional[str]
+
+
+@dataclass
+class TokensExample:
     """
     A single training/test example for token classification.
 
     Args:
         guid: Unique id for the example.
         words: list. The words of the sequence.
-        labels: (Optional) list. The labels for each word of the sequence. This should be
-        specified for train and dev examples, but not for test examples.
+        labels: (Optional) list. The labels for each word of the sequence. This
+        should be specified for train and dev examples, but not for test
+        examples.
     """
     guid: str
     words: List[str]
@@ -52,48 +72,96 @@ class InputFeatures:
     A single set of features of data.
     Property names are the same names as the corresponding inputs to a model.
     """
-    input_ids: List[int]
-    attention_mask: List[int]
-    token_type_ids: Optional[List[int]] = None
-    label_ids: Optional[List[int]] = None
+    example_id: str = None
+    input_ids
+    attention_mask
+    token_type_ids = None
+    label = None
+    candidates = None
 
 
-def read_examples_from_file(data_dir, lang, mode) -> List[InputExample]:
-    file_path = os.path.join(data_dir, lang, f"{mode}.txt")
-    guid_index = 1
-    examples = []
-    with open(file_path, encoding="utf-8") as f:
-        words = []
-        labels = []
-        for line in f:
-            if line.startswith("-DOCSTART-") or line == "" or line == "\n":
-                if words:
-                    examples.append(InputExample(guid=f"{mode}-{guid_index}", words=words, labels=labels))
-                    guid_index += 1
-                    words = []
-                    labels = []
+def convert_multiple_choice_examples_to_features(
+    examples: List[MultipleChoiceExample],
+    tokenizer: PreTrainedTokenizer,
+    max_length: int,
+    label_list: List[str],
+    pad_token_segment_id=0,
+    pad_on_left=False,
+    pad_token=0,
+    mask_padding_with_zero=True,
+) -> List[InputFeatures]:
+    """
+    Loads a data file into a list of `InputFeatures`
+    """
+
+    label_map = {label: i for i, label in enumerate(label_list)}
+
+    features = []
+    for (ex_index, example) in tqdm.tqdm(enumerate(examples), desc="convert examples to features"):
+        if ex_index % 10000 == 0:
+            logger.info("Writing example %d of %d" % (ex_index, len(examples)))
+        choices_inputs = []
+        for ending_idx, (context, ending) in enumerate(zip(example.contexts, example.endings)):
+            text_a = context
+            if example.question.find("_") != -1:
+                # this is for cloze question
+                text_b = example.question.replace("_", ending)
             else:
-                splits = line.split(" ")
-                words.append(splits[0])
-                if len(splits) > 1:
-                    labels.append(splits[-1].replace("\n", ""))
-                else:
-                    # Examples could have no label for mode = "test"
-                    labels.append("O")
-        if words:
-            examples.append(InputExample(guid=f"{mode}-{guid_index}", words=words, labels=labels))
-    return examples
+                text_b = example.question + " " + ending
+
+            inputs = tokenizer.encode_plus(
+                text_a,
+                text_b,
+                add_special_tokens=True,
+                max_length=max_length,
+                pad_to_max_length=True,
+                return_overflowing_tokens=True,
+            )
+            if "num_truncated_tokens" in inputs and inputs["num_truncated_tokens"] > 0:
+                logger.info(
+                    "Attention! you are cropping tokens (swag task is ok). "
+                    "If you are training ARC and RACE and you are poping question + options,"
+                    "you need to try to use a bigger max seq length!"
+                )
+
+            choices_inputs.append(inputs)
+
+        label = label_map[example.label]
+
+        input_ids = [x["input_ids"] for x in choices_inputs]
+        attention_mask = (
+            [x["attention_mask"] for x in choices_inputs] if "attention_mask" in choices_inputs[0] else None
+        )
+        token_type_ids = (
+            [x["token_type_ids"] for x in choices_inputs] if "token_type_ids" in choices_inputs[0] else None
+        )
+
+        features.append(
+            InputFeatures(
+                example_id=example.example_id,
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                token_type_ids=token_type_ids,
+                label=label,
+            )
+        )
+
+    for f in features[:2]:
+        logger.info("*** Example ***")
+        logger.info("feature: %s" % f)
+
+    return features
 
 
-def convert_examples_to_features(
+def convert_tokens_examples_to_features(
     examples: List[InputExample],
     label_list: List[str],
     max_seq_length: int,
     tokenizer: PreTrainedTokenizer,
     cls_token_at_end=False,
-    cls_token="[CLS]",
+    cls_token='[CLS]',
     cls_token_segment_id=1,
-    sep_token="[SEP]",
+    sep_token='[SEP]',
     sep_token_extra=False,
     pad_on_left=False,
     pad_token=0,
@@ -207,18 +275,7 @@ def convert_examples_to_features(
 
         features.append(
             InputFeatures(
-                input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids, label_ids=label_ids
+                input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids, label=label_ids
             )
         )
     return features
-
-
-def get_labels(path: str) -> List[str]:
-    if path:
-        with open(path, "r") as f:
-            labels = f.read().splitlines()
-        if "O" not in labels:
-            labels = ["O"] + labels
-        return labels
-    else:
-        return ["O", "B-MISC", "I-MISC", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC"]
