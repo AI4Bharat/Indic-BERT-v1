@@ -8,11 +8,11 @@ from .xsent_retrieval import XSentRetrieval
 
 
 modules = {
-    'masked-lm': MaskedLM,
-    'multiple-choice': MultipleChoice,
-    'text-classification': TextClassification,
-    'token-classification': TokenClassification,
-    'xsent-retrieval': XSentRetrieval
+    'masked_lm': MaskedLM,
+    'multiple_choice': MultipleChoice,
+    'text_classification': TextClassification,
+    'token_classification': TokenClassification,
+    'xsent_retrieval': XSentRetrieval
 }
 
 

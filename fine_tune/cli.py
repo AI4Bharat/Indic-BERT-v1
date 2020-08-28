@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from .modules import get_modules
+# from .modules import get_modules
 
 
 def add_generic_args(parser, root_dir):
@@ -135,15 +135,13 @@ def add_generic_args(parser, root_dir):
     # model training and inference parameters START
 
 
-def main():
+def main(argvec=None):
     parser = argparse.ArgumentParser()
     add_generic_args(parser, os.getcwd())
     for module in get_modules():
         module.add_model_specific_args(parser, os.getcwd())
     args = parser.parse_args()
-    hparams = vars(args)
-
-    print(hparams)
+    hparams = vars(argvec)
 
     module_class = get_modules(hparams['module_name'])
     module = module_class(hparams)
