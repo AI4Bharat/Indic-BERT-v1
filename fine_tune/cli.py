@@ -1,7 +1,7 @@
 import argparse
 import os
 
-# from .modules import get_modules
+from .modules import get_modules
 
 
 def add_generic_args(parser, root_dir):
@@ -140,8 +140,8 @@ def main(argvec=None):
     add_generic_args(parser, os.getcwd())
     for module in get_modules():
         module.add_model_specific_args(parser, os.getcwd())
-    args = parser.parse_args()
-    hparams = vars(argvec)
+    args = parser.parse_args(argvec)
+    hparams = vars(args)
 
     module_class = get_modules(hparams['module_name'])
     module = module_class(hparams)
