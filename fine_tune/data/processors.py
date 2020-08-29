@@ -310,3 +310,71 @@ class ManKiBaat:
             )
             examples.append(example)
         return examples
+
+
+class ACTSA(IndicNLPGenre):
+    pass
+
+
+class BBCNews(IndicNLPGenre):
+    pass
+
+
+class INLTKHeadlines(IndicNLPGenre):
+    pass
+
+
+class SohamArticles(IndicNLPGenre):
+    pass
+
+
+class IITPMovies(IndicNLPGenre):
+    pass
+
+
+class IITPProducts(IndicNLPGenre):
+    pass
+
+
+class MidasDiscourse(DataProcessor):
+    """Processor for the Article Genre Classification data set"""
+
+    def __init__(self, data_dir):
+        self.data_dir = data_dir
+
+    def get_train_examples(self, lang):
+        """See base class."""
+        fname = '{}/train.json'.format(lang, lang)
+        fpath = os.path.join(self.data_dir, fname)
+        return self._create_examples(self.read_csv(fpath), 'train')
+
+    def get_dev_examples(self, lang):
+        """See base class."""
+        fname = '{}/val.json'.format(lang, lang)
+        fpath = os.path.join(self.data_dir, fname)
+        return self._create_examples(self.read_json(fpath), 'dev')
+
+    def get_test_examples(self, lang):
+        fname = '{}/test.json'.format(lang, lang)
+        fpath = os.path.join(self.data_dir, fname)
+        return self._create_examples(self.read_json(fpath), 'test')
+
+    def get_labels(self, lang):
+        """See base class."""
+        filename = '{}/train.json'.format(lang, lang)
+        lines = self.read_json(os.path.join(self.data_dir, filename))
+        labels = map(lambda l: l['Discourse Mode'], lines)
+        labels = list(set(labels))
+        return labels
+
+    def _create_examples(self, lines, set_type):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            example = TextExample(
+                guid=('%s-%s' % (set_type, i)),
+                text_a=line['Sentence'],
+                label=line['Discourse Mode']
+            )
+            examples.append(example)
+        return examples

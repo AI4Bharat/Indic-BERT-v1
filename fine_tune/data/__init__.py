@@ -8,7 +8,13 @@ PROCESSORS_TABLE = {
     'indicnlp-genre': IndicNLPGenre,
     'wikiann-ner': WikiNER,
     'wiki-section-titles': WikiSectionTitles,
-    'mann-ki-baat': ManKiBaat
+    'actsa': ACTSA,
+    'bbc-news': BBCNews,
+    'iitp-movies': IITPMovies,
+    'iitp-products': IITProducts,
+    'inltk-headlines': INLTKHeadlines,
+    'soham-articles': SohamArticles,
+    'midas-discourse': MidasDiscourse
 }
 
 
