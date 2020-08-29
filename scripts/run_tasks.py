@@ -15,10 +15,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from fine_tune.cli import main as finetune_main
 
 
+ALL_LANGS = ['pa', 'hi', 'gu', 'mr', 'kn', 'ta', 'te', 'ml', 'or', 'as', 'bn']
+
 BASE_DIR = '/home/divkakwani/refactor'
 IGLUE_DIR = '{}/iglue'.format(BASE_DIR)
 MODELS_DIR = '{}/models'.format(BASE_DIR)
 BASE_OUTPUT_DIR = '{}/outputs'.format(BASE_DIR)
+
 IGLUE_TASKS = {
     'agc': ['text_classification', 'indicnlp-articles', '{}/indicnlp-articles'.format(IGLUE_DIR), True],
     'ner': ['token_classification', 'wikiann-ner', '{}/wikiann-ner'.format(IGLUE_DIR), True],
@@ -31,12 +34,21 @@ IGLUE_TASKS = {
 ADDN_TASKS = {
     'tydi': ['question_answering', 'tydi', '$IGLUE_DIR/tydi', True]
 }
-
+SENTIMENT_TASKS = {
+    'bbc-news-classification': ['text_classification', 'bbc-articles'],
+    'iitp-movie-sentiment': ['text_classification',],
+    'iitp-product-sentiment': ['text_classification'],
+    'soham-article-classification': ['text_classification'],
+    'inltk-headline-classification': ['text_classification'],
+    'actsa-sentiment': ['text_classification'],
+    'midas-discourse': ['text_classification']
+}
+                                    }
 
 # Note: need to protect with __main__ for multiprocessing to work
 def main():
-    if len(sys.argv) != 5:
-        print('Usage: python3 run_tasks.py <model_name> <tasks> <train_langs> <test_langs>')
+    if len(sys.argv) != 4:
+        print('Usage: python3 run_tasks.py <model_name> <tasks> <test_langs>')
         sys.exit()
 
     model_name = sys.argv[1]
@@ -56,7 +68,7 @@ def main():
         CONFIG = '{}/{}/config.json'.format(MODELS_DIR, model_name)
         TOKENIZER = '{}/{}/spiece.model'.format(MODELS_DIR, model_name)
 
-    all_params = list(it.product(tasks, train_langs, test_langs))
+    all_params = list(it.product(tasks, test_langs))
 
     for params in all_params:
         print("=============== Parameters =================")
@@ -70,7 +82,7 @@ def main():
         
         argvec = [
             '--train_lang', params[1],
-            '--test_lang', params[2],
+            '--test_lang', params[1],
             '--module_name', IGLUE_TASKS[params[0]][0],
             '--dataset',  IGLUE_TASKS[params[0]][1],
             '--model_name_or_path', BERT_MODEL,
@@ -83,7 +95,7 @@ def main():
             '--num_train_epochs', '3',
             '--train_batch_size', '32',
             '--seed', '2',
-            '--labels', '{}/{}/labels.txt'.format(data_dir, params[2]),
+            '--labels', '{}/{}/labels.txt'.format(data_dir, params[1]),
             '--n_tpu_cores', '8',
             '--do_predict'
         ]
