@@ -332,7 +332,7 @@ class IITPMovies(IndicNLPGenre):
     pass
 
 
-class IITPProducts(IndicNLPGenre):
+class IITProducts(IndicNLPGenre):
     pass
 
 
@@ -346,7 +346,7 @@ class MidasDiscourse(DataProcessor):
         """See base class."""
         fname = '{}/train.json'.format(lang, lang)
         fpath = os.path.join(self.data_dir, fname)
-        return self._create_examples(self.read_csv(fpath), 'train')
+        return self._create_examples(self.read_json(fpath), 'train')
 
     def get_dev_examples(self, lang):
         """See base class."""

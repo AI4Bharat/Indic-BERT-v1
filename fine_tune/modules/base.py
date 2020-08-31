@@ -321,7 +321,7 @@ class BaseModule(pl.LightningModule):
         )
 
     def is_logger(self):
-        return self.trainer.proc_rank <= 0
+        return self.trainer.global_rank <= 0
 
     def configure_optimizers(self):
         """Prepare optimizer and schedule (linear warmup and decay)"""
@@ -428,7 +428,6 @@ def create_trainer(model, hparams):
         gradient_clip_val=hparams['max_grad_norm'],
         checkpoint_callback=checkpoint_callback,
         callbacks=[LoggingCallback()],
-        verbose=True
     )
 
     if hparams['fp16']:
@@ -436,7 +435,7 @@ def create_trainer(model, hparams):
         train_params['amp_level'] = hparams['fp16_opt_level']
 
     if hparams['n_tpu_cores'] > 0:
-        train_params['num_tpu_cores'] = hparams['n_tpu_cores']
+        train_params['tpu_cores'] = hparams['n_tpu_cores']
         train_params['gpus'] = 0
 
     if hparams['n_gpu'] > 1:
