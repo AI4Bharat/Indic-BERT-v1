@@ -9,7 +9,6 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-import torch_xla.core.xla_model as xm
 
 from torch.nn import CrossEntropyLoss, MSELoss
 from torch.utils.data import DataLoader, TensorDataset
@@ -349,6 +348,7 @@ class BaseModule(pl.LightningModule):
     def optimizer_step(self, epoch, batch_idx, optimizer, optimizer_idx,
                        second_order_closure=None):
         if self.trainer.use_tpu:
+            import torch_xla.core.xla_model as xm
             xm.optimizer_step(optimizer)
         else:
             optimizer.step()
