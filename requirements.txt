@@ -2,7 +2,7 @@
 tensorflow==1.15.2   # CPU Version of TensorFlow
 # tensorflow-gpu==1.15  # GPU version of TensorFlow
 tensorflow_hub==0.7
-torch=1.6.0
+torch==1.6.0
 absl-py==0.10.0
 cachetools==4.1.1
 certifi==2020.6.20
