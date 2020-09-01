@@ -413,7 +413,7 @@ class WNLI(DataProcessor):
 
     def get_labels(self, lang):
         """See base class."""
-        return [0, 1]
+        return ['0', '1']
 
     def _create_examples(self, lines, set_type):
         """Creates examples for the training, dev and test sets."""
