@@ -1,23 +1,37 @@
 import argparse
 import os
+import sys
 
 from .modules import get_modules
+
+
+ALL_TASKS = {
+    'agc': ['text_classification', 'indicnlp-articles', 'indicnlp-articles', True],
+    'ner': ['token_classification', 'wikiann-ner', 'wikiann-ner', True],
+    'mep': ['masked_lm', 'wiki-cloze', 'wiki-cloze', False],
+    'wstp': ['multiple_choice', 'wiki-section-titles', 'wiki-section-titles', True],
+    'hp': ['multiple_choice', 'indicnlp-articles-headlines', 'indicnlp-articles', True],
+    'xsr': ['XSR', 'xsent_retrieval', 'mann-ki-baat', 'cvit-mkb', False]
+    'tydi': ['question_answering', 'tydi', 'tydi', True],
+    'bbc-news-classification': ['text_classification', 'bbc-articles', 'bbc-articles', True],
+    'iitp-movie-sentiment': ['text_classification', 'iitp-movies', 'iitp-movie-reviews', True],
+    'iitp-product-sentiment': ['text_classification', 'iitp-products', 'iitp-product-reviews', True],
+    'soham-article-classification': ['text_classification', 'soham-articles', 'soham-articles', True],
+    'inltk-headline-classification': ['text_classification', 'inltk-headlines', 'inltk-headlines', True],
+    'actsa-sentiment': ['text_classification', 'actsa', 'actsa', True],
+    'midas-discourse': ['text_classification', 'midas-discourse', 'midas-discourse', True],
+    'wnli': ['multiple_choice', 'wnli', 'wnli-translated', True],
+    'copa': ['multiple_choice', 'copa', 'copa-translated', True],
+}
 
 
 def add_generic_args(parser, root_dir):
     # task-specific args START
     parser.add_argument(
-        '--module_name',
+        '--task',
         type=str,
         required=True,
         help='The transformer module to use to solve the task'
-    )
-
-    parser.add_argument(
-        '--dataset',
-        type=str,
-        required=True,
-        help='The dataset used for fine-tuning and evaluation'
     )
 
     parser.add_argument(
@@ -132,7 +146,7 @@ def add_generic_args(parser, root_dir):
     )
     parser.add_argument('--train_batch_size', default=32, type=int)
     parser.add_argument('--eval_batch_size', default=32, type=int)
-    # model training and inference parameters START
+    # model training and inference parameters END
 
 
 def main(argvec=None):
@@ -143,7 +157,29 @@ def main(argvec=None):
     args = parser.parse_args(argvec)
     hparams = vars(args)
 
-    module_class = get_modules(hparams['module_name'])
+    task = hparams['task']
+    train_lang = hparams['train_lang']
+    test_lang = hparam['test_lang']
+    model = hparams['model_name_or_path']
+
+    data_dir = os.path.join(hparams['data_dir'], ALL_TASKS[task][2])
+    output_dir = os.path.join(hparams['output_dir'], task,\
+                    '{}-{}'.format(train_lang, test_lang), 'model-{}'.format(model))
+
+    hparams['data_dir'] = data_dir
+    hparams['output_dir'] = output_dir
+    hparams['dataset'] = ALL_TASKS[task][1]
+    hparams['do_train'] ALL_TASKS[task][3]
+    hparams['do_predict'] = True
+    
+    if task not in ALL_TASKS:
+        print('Invalid task')
+        sys.exit()
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    module_name = ALL_TASKS[task][0]
+    module_class = get_modules(module_name))
     module = module_class(hparams)
     module.run_module()
 
