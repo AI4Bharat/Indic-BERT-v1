@@ -1,13 +1,11 @@
-
-
-<p align="center">
-  <h1>Indic BERT</h1><br>
+<div align="center">
+  <h1>Indic BERT</h1>
   <a href="#">website</a> |
   <a href="#">downloads</a> |
   <a href="#">demo</a><br>
   <img alt="Doc" src="https://img.shields.io/static/v1?url=https%3A%2F%2Fgoogle.com&label=label&color=green&message=indic-bert&logo=huggingface">
-  <br><br>
-</p>
+  <br>
+</div>
 
 The repository contains code for running experiments for Indian languages on indic-bert and other bert-like models.
 
