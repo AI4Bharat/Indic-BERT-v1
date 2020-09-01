@@ -11,7 +11,7 @@ ALL_TASKS = {
     'mep': ['masked_lm', 'wiki-cloze', 'wiki-cloze', False],
     'wstp': ['multiple_choice', 'wiki-section-titles', 'wiki-section-titles', True],
     'hp': ['multiple_choice', 'indicnlp-articles-headlines', 'indicnlp-articles', True],
-    'xsr': ['XSR', 'xsent_retrieval', 'mann-ki-baat', 'cvit-mkb', False]
+    'xsr': ['XSR', 'xsent_retrieval', 'mann-ki-baat', 'cvit-mkb', False],
     'tydi': ['question_answering', 'tydi', 'tydi', True],
     'bbc-news-classification': ['text_classification', 'bbc-articles', 'bbc-articles', True],
     'iitp-movie-sentiment': ['text_classification', 'iitp-movies', 'iitp-movie-reviews', True],
@@ -169,7 +169,7 @@ def main(argvec=None):
     hparams['data_dir'] = data_dir
     hparams['output_dir'] = output_dir
     hparams['dataset'] = ALL_TASKS[task][1]
-    hparams['do_train'] ALL_TASKS[task][3]
+    hparams['do_train'] = ALL_TASKS[task][3]
     hparams['do_predict'] = True
     
     if task not in ALL_TASKS:
@@ -179,7 +179,7 @@ def main(argvec=None):
     os.makedirs(output_dir, exist_ok=True)
 
     module_name = ALL_TASKS[task][0]
-    module_class = get_modules(module_name))
+    module_class = get_modules(module_name)
     module = module_class(hparams)
     module.run_module()
 
