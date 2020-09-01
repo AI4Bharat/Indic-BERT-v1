@@ -407,7 +407,7 @@ class WNLI(DataProcessor):
 
     def get_test_examples(self, lang):
         """See base class."""
-        fname = '{}/test.csv'.format(lang)
+        fname = '{}/dev.csv'.format(lang)
         fpath = os.path.join(self.data_dir, fname)
         return self._create_examples(self.read_csv(fpath), 'test')
 
@@ -449,7 +449,7 @@ class COPA(DataProcessor):
 
     def get_test_examples(self, lang):
         """See base class."""
-        fname = '{}/test.jsonl'.format(lang, lang)
+        fname = '{}/dev.jsonl'.format(lang, lang)
         fpath = os.path.join(self.data_dir, fname)
         return self._create_examples(self.read_jsonl(fpath), 'test')
 
