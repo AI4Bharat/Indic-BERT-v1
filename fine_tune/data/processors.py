@@ -449,7 +449,7 @@ class COPA(DataProcessor):
 
     def get_test_examples(self, lang):
         """See base class."""
-        fname = '{}/test.jsonl'.format(lang, lang)
+        fname = '{}/val.jsonl'.format(lang, lang)
         fpath = os.path.join(self.data_dir, fname)
         return self._create_examples(self.read_jsonl(fpath), 'test')
 
