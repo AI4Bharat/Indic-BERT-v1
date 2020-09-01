@@ -1,9 +1,13 @@
 import tqdm
+import logging
 
 from dataclasses import dataclass
 from typing import Optional, List, Any
 from transformers import PreTrainedTokenizer
 from transformers import glue_convert_examples_to_features as convert_text_examples_to_features
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
