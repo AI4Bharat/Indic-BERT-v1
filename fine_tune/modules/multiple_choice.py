@@ -1,3 +1,5 @@
+import torch
+import numpy as np
 
 from .base import BaseModule
 from .utils import mean_accuracy
