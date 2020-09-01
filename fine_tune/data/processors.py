@@ -52,12 +52,12 @@ class DataProcessor:
             return json.load(fp)
 
     @classmethod
-    def readlines(filepath):
+    def readlines(cls, filepath):
         with open(filepath, encoding='utf-8') as fp:
             return fp.readlines()
 
     @classmethod
-    def read_jsonl(filepath):
+    def read_jsonl(cls, filepath):
         with open(filepath, 'r', encoding='utf-8') as fp:
             data = fp.readlines()
             data = list(map(lambda l: json.loads(l), data))
