@@ -246,7 +246,7 @@ class WikiSectionTitles(DataProcessor):
         fpath = os.path.join(self.data_dir, fname)
         return self._create_examples(self.read_json(fpath), 'train')
 
-    def get_valid_examples(self, lang):
+    def get_dev_examples(self, lang):
         """See base class."""
         fname = '{}/{}-valid.json'.format(lang, lang)
         fpath = os.path.join(self.data_dir, fname)
@@ -441,7 +441,7 @@ class COPA(DataProcessor):
         fpath = os.path.join(self.data_dir, fname)
         return self._create_examples(self.read_jsonl(fpath), 'train')
 
-    def get_valid_examples(self, lang):
+    def get_dev_examples(self, lang):
         """See base class."""
         fname = '{}/val.jsonl'.format(lang)
         fpath = os.path.join(self.data_dir, fname)
