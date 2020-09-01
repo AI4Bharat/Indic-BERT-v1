@@ -159,7 +159,7 @@ def main(argvec=None):
 
     task = hparams['task']
     train_lang = hparams['train_lang']
-    test_lang = hparam['test_lang']
+    test_lang = hparams['test_lang']
     model = hparams['model_name_or_path']
 
     data_dir = os.path.join(hparams['data_dir'], ALL_TASKS[task][2])
