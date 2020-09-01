@@ -9,8 +9,8 @@ class MultipleChoice(BaseModule):
     output_mode = 'classification'
     example_type = 'multiple-choice'
 
-    def __init__(self, params):
-        super().__init__(self, params)
+    def __init__(self, hparams):
+        super().__init__(hparams)
 
     def _eval_end(self, outputs):
         val_loss_mean = torch.stack([x['val_loss'] for x in outputs])\
