@@ -397,7 +397,7 @@ class WNLI(DataProcessor):
         """See base class."""
         fname = '{}/train.csv'.format(lang)
         fpath = os.path.join(self.data_dir, fname)
-        return self._create_examples(self.read_csv(fpath), 'dev')
+        return self._create_examples(self.read_csv(fpath), 'train')
 
     def get_dev_examples(self, lang):
         """See base class."""
@@ -409,7 +409,7 @@ class WNLI(DataProcessor):
         """See base class."""
         fname = '{}/test.csv'.format(lang)
         fpath = os.path.join(self.data_dir, fname)
-        return self._create_examples(self.read_csv(fpath), 'dev')
+        return self._create_examples(self.read_csv(fpath), 'test')
 
     def get_labels(self, lang):
         """See base class."""
