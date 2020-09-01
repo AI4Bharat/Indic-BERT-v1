@@ -20,7 +20,7 @@ ALL_TASKS = {
     'inltk-headline-classification': ['text_classification', 'inltk-headlines', 'inltk-headlines', True],
     'actsa-sentiment': ['text_classification', 'actsa', 'actsa', True],
     'midas-discourse': ['text_classification', 'midas-discourse', 'midas-discourse', True],
-    'wnli': ['multiple_choice', 'wnli', 'wnli-translated', True],
+    'wnli': ['text_classification', 'wnli', 'wnli-translated', True],
     'copa': ['multiple_choice', 'copa', 'copa-translated', True],
 }
 

@@ -56,6 +56,13 @@ class DataProcessor:
         with open(filepath, encoding='utf-8') as fp:
             return fp.readlines()
 
+    @classmethod
+    def read_jsonl(filepath):
+        with open(filepath, 'r', encoding='utf-8') as fp:
+            data = fp.readlines()
+            data = list(map(lambda l: json.loads(l), data))
+        return data
+
 
 class IndicNLPHeadlines(DataProcessor):
     """Processor for the Headline Predction dataset"""
@@ -377,4 +384,89 @@ class MidasDiscourse(DataProcessor):
                 label=line['Discourse Mode']
             )
             examples.append(example)
+        return examples
+
+
+class WNLI(DataProcessor):
+    """Processor for the WNLI data set (GLUE version)."""
+
+    def __init__(self, data_dir):
+        self.data_dir = data_dir
+
+    def get_train_examples(self, lang):
+        """See base class."""
+        fname = '{}/train.csv'.format(lang)
+        fpath = os.path.join(self.data_dir, fname)
+        return self._create_examples(self.read_csv(fpath), 'dev')
+
+    def get_dev_examples(self, lang):
+        """See base class."""
+        fname = '{}/dev.csv'.format(lang)
+        fpath = os.path.join(self.data_dir, fname)
+        return self._create_examples(self.read_csv(fpath), 'dev')
+
+    def get_test_examples(self, lang):
+        """See base class."""
+        fname = '{}/test.csv'.format(lang)
+        fpath = os.path.join(self.data_dir, fname)
+        return self._create_examples(self.read_csv(fpath), 'dev')
+
+    def get_labels(self, lang):
+        """See base class."""
+        return [0, 1]
+
+    def _create_examples(self, lines, set_type):
+        """Creates examples for the training, dev and test sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            guid = "%s-%s" % (set_type, line[0])
+            text_a = line[1]
+            text_b = line[2]
+            label = None if set_type == 'test' else line[-1]
+            examples.append(TextExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
+        return examples
+
+
+class COPA(DataProcessor):
+    """Processor for the Wikipedia Section Title Prediction dataset"""
+
+    def __init__(self, data_dir):
+        self.data_dir = data_dir
+
+    def get_train_examples(self, lang):
+        """See base class."""
+        fname = '{}/train.jsonl'.format(lang)
+        fpath = os.path.join(self.data_dir, fname)
+        return self._create_examples(self.read_jsonl(fpath), 'train')
+
+    def get_valid_examples(self, lang):
+        """See base class."""
+        fname = '{}/val.jsonl'.format(lang)
+        fpath = os.path.join(self.data_dir, fname)
+        return self._create_examples(self.read_jsonl(fpath), 'dev')
+
+    def get_test_examples(self, lang):
+        """See base class."""
+        fname = '{}/test.jsonl'.format(lang, lang)
+        fpath = os.path.join(self.data_dir, fname)
+        return self._create_examples(self.read_jsonl(fpath), 'test')
+
+    def get_labels(self, lang):
+        """See base class."""
+        return [0, 1]
+
+    def _create_examples(self, items, set_type):
+        """Creates examples for the training and dev sets."""
+        examples = [
+            MultipleChoiceExample(
+                example_id=idx,
+                question='',
+                contexts=[item['premise'], item['premise']],
+                endings=[item['choice1'], item['choice2']],
+                label=item['label'],
+            )
+            for idx, item in enumerate(items)
+        ]
         return examples

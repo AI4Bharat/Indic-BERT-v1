@@ -14,7 +14,9 @@ PROCESSORS_TABLE = {
     'iitp-products': IITProducts,
     'inltk-headlines': INLTKHeadlines,
     'soham-articles': SohamArticles,
-    'midas-discourse': MidasDiscourse
+    'midas-discourse': MidasDiscourse,
+    'wnli': WNLI,
+    'copa': COPA
 }
 
 
