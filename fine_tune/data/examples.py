@@ -1,3 +1,4 @@
+import tqdm
 
 from dataclasses import dataclass
 from typing import Optional, List, Any
