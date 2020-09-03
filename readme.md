@@ -1,5 +1,5 @@
 <div align="center">
-  <div style="color: rgba(0, 0, 0, 0.8); font-size: 3em; font-weight: 600;"><i>INDIC BERT</i></div>
+  <h1><b><i>INDIC BERT</i></b></h1>
   <a href="#">website</a> |
   <a href="#">downloads</a> |
   <a href="#">demo</a> |
