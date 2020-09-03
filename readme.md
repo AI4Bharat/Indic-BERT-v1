@@ -1,8 +1,8 @@
 <div align="center">
-  <h1>Indic BERT</h1>
+  <div style="color: rgba(0, 0, 0, 0.8); font-size: 3em; font-weight: 600;"><i>INDIC BERT</i></div>
   <a href="#">website</a> |
   <a href="#">downloads</a> |
-  <a href="#">demo</a><br>
+  <a href="#">demo</a> |
   <img alt="Doc" src="https://img.shields.io/static/v1?url=https%3A%2F%2Fgoogle.com&label=label&color=green&message=indic-bert&logo=huggingface">
   <br>
 </div>
