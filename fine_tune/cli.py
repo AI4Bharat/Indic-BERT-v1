@@ -13,7 +13,7 @@ ALL_TASKS = {
     'hp': ['multiple_choice', 'indicnlp-articles-headlines', 'indicnlp-articles', True],
     'xsr': ['XSR', 'xsent_retrieval', 'mann-ki-baat', 'cvit-mkb', False],
     'tydi': ['question_answering', 'tydi', 'tydi', True],
-    'bbc-news-classification': ['text_classification', 'bbc-articles', 'bbc-articles', True],
+    'bbc-news-classification': ['text_classification', 'bbc-news', 'bbc-articles', True],
     'iitp-movie-sentiment': ['text_classification', 'iitp-movies', 'iitp-movie-reviews', True],
     'iitp-product-sentiment': ['text_classification', 'iitp-products', 'iitp-product-reviews', True],
     'soham-article-classification': ['text_classification', 'soham-articles', 'soham-articles', True],
