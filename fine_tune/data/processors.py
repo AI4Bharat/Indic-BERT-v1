@@ -324,7 +324,12 @@ class ACTSA(IndicNLPGenre):
 
 
 class BBCNews(IndicNLPGenre):
-    pass
+
+    def get_dev_examples(self, lang):
+        """See base class."""
+        fname = '{}/{}-test.csv'.format(lang, lang)
+        fpath = os.path.join(self.data_dir, fname)
+        return self._create_examples(self.read_csv(fpath), 'dev')
 
 
 class INLTKHeadlines(IndicNLPGenre):
