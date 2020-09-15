@@ -348,6 +348,34 @@ class IITProducts(IndicNLPGenre):
     pass
 
 
+class AmritaParaphraseExact(IndicNLPGenre):
+
+    def get_labels(self, lang):
+        """See base class."""
+        filename = '{}/{}-train.csv'.format(lang, lang)
+        lines = self.read_csv(os.path.join(self.data_dir, filename))
+        labels = map(lambda l: l[3], lines)
+        labels = list(set(labels))
+        return labels
+
+    def _create_examples(self, lines, set_type):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            example = TextExample(
+                guid=('%s-%s' % (set_type, i)),
+                text_a=line[1],
+                text_b=line[2],
+                label=line[3]
+            )
+            examples.append(example)
+        return examples
+
+
+class AmritaParaphraseFuzzy(AmritaParaphraseExact):
+    pass
+
+
 class MidasDiscourse(DataProcessor):
     """Processor for the Article Genre Classification data set"""
 

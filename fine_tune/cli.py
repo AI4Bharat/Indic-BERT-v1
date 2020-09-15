@@ -22,6 +22,8 @@ ALL_TASKS = {
     'midas-discourse': ['text_classification', 'midas-discourse', 'midas-discourse', True],
     'wnli': ['text_classification', 'wnli', 'wnli-translated', True],
     'copa': ['multiple_choice', 'copa', 'copa-translated', True],
+    'paraphrase-exact': ['text_classification', 'amrita-paraphrase-exact', 'amrita-paraphrase-exact', True],
+    'paraphrase-fuzzy': ['text_classification', 'amrita-paraphrase-fuzzy', 'amrita-paraphrase-fuzzy', True],
 }
 
 

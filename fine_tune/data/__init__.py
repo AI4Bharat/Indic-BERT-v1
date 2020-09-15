@@ -16,7 +16,9 @@ PROCESSORS_TABLE = {
     'soham-articles': SohamArticles,
     'midas-discourse': MidasDiscourse,
     'wnli': WNLI,
-    'copa': COPA
+    'copa': COPA,
+    'amrita-paraphrase-exact': AmritaParaphraseExact,
+    'amrita-paraphrase-fuzzy': AmritaParaphraseFuzzy
 }
 
 
