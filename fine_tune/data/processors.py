@@ -350,6 +350,12 @@ class IITProducts(IndicNLPGenre):
 
 class AmritaParaphraseExact(IndicNLPGenre):
 
+    def get_dev_examples(self, lang):
+        """See base class."""
+        fname = '{}/{}-test.csv'.format(lang, lang)
+        fpath = os.path.join(self.data_dir, fname)
+        return self._create_examples(self.read_csv(fpath), 'dev')
+
     def get_labels(self, lang):
         """See base class."""
         filename = '{}/{}-train.csv'.format(lang, lang)
