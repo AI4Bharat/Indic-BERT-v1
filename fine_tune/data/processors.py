@@ -360,21 +360,19 @@ class AmritaParaphraseExact(IndicNLPGenre):
         """See base class."""
         filename = '{}/{}-train.csv'.format(lang, lang)
         lines = self.read_csv(os.path.join(self.data_dir, filename))
-        labels = map(lambda l: l[3], lines)
+        labels = map(lambda l: l[2], lines)
         labels = list(set(labels))
         return labels
 
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""
         examples = []
-        lines = lines[1:]
         for (i, line) in enumerate(lines):
-            x = 1 if set_type != 'train' else 0
             example = TextExample(
                 guid=('%s-%s' % (set_type, i)),
-                text_a=line[1-x],
-                text_b=line[2-x],
-                label=line[3-x]
+                text_a=line[0],
+                text_b=line[1],
+                label=line[2]
             )
             examples.append(example)
         return examples
