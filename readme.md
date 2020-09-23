@@ -279,13 +279,13 @@ The model can be downloaded [here](https://storage.googleapis.com/ai4bharat-publ
 If you are using any of the resources, please cite the following article:
 
 ```
-@article{kunchukuttan2020indicnlpcorpus,
-    title={AI4Bharat-IndicNLP Corpus: Monolingual Corpora and Word Embeddings for Indic Languages},
-    author={Anoop Kunchukuttan and Divyanshu Kakwani and Satish Golla and Gokul N.C. and Avik Bhattacharyya and Mitesh M. Khapra and Pratyush Kumar},
+@inproceedings{kakwani2020indicnlpsuite,
+    title={{IndicNLPSuite: Monolingual Corpora, Evaluation Benchmarks and Pre-trained Multilingual Language Models for Indian Languages}},
+    author={Divyanshu Kakwani and Anoop Kunchukuttan and Satish Golla and Gokul N.C. and Avik Bhattacharyya and Mitesh M. Khapra and Pratyush Kumar},
     year={2020},
-    journal={arXiv preprint arXiv:2005.00085},
+    booktitle={Findings of EMNLP},
 }
-```
+``` 
 
 We would like to hear from you if:
 
