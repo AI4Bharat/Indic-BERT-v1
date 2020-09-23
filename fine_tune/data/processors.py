@@ -230,8 +230,13 @@ class WikiNER(DataProcessor):
             examples.append(TokensExample)
         return examples
 
-    def get_labels(self):
-        pass
+    def get_labels(self, lang):
+        path = os.path.join(self.data_dir, lang, 'train.txt')
+        with open(path, 'r') as f:
+            labels = f.read().splitlines()
+        if 'O' not in labels:
+            labels = ['O'] + labels
+        return labels
 
 
 class WikiSectionTitles(DataProcessor):
