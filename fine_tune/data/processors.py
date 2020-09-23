@@ -227,7 +227,7 @@ class WikiNER(DataProcessor):
                 words=words,
                 labels=labels
             )
-            examples.append(TokensExample)
+            examples.append(example)
         return examples
 
     def get_labels(self, lang):
