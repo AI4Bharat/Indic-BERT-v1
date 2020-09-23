@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 class TokenClassification(BaseModule):
 
     mode = 'token-classification'
+    output_mode = 'classification'
+    example_type = 'tokens'
 
     def __init__(self, hyparams):
         self.pad_token_label_id = CrossEntropyLoss().ignore_index
