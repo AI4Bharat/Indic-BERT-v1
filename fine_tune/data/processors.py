@@ -231,7 +231,7 @@ class WikiNER(DataProcessor):
         return examples
 
     def get_labels(self, lang):
-        path = os.path.join(self.data_dir, lang, 'train.txt')
+        path = os.path.join(self.data_dir, lang, f'{lang}-train.txt')
         with open(path, 'r') as f:
             labels = f.read().splitlines()
         if 'O' not in labels:
