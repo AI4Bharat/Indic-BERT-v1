@@ -3,7 +3,7 @@
   <a href="http://indicnlp.ai4bharat.org">Website</a> |
   <a href="#">Downloads</a> |
     <a href="#">Paper</a><br>
-  <img alt="Doc" src="https://img.shields.io/static/v1?url=https%3A%2F%2Fhuggingface.co%2Fai4bharat%2Findic-bert&label=Huggingface&color=green&message=indic-bert&logo=huggingface">
+    <a href="https://huggingface.co/ai4bharat/indic-bert"><img alt="Doc" src="https://img.shields.io/static/v1?url=https%3A%2F%2Fhuggingface.co%2Fai4bharat%2Findic-bert&label=Huggingface&color=green&message=indic-bert&logo=huggingface"></a>
   <br><br>
 </div>
 
@@ -19,7 +19,7 @@ We also introduce IGLUE - a set of standard evaluation tasks that can be used to
 * [Setting up the Code](#setting-up-the-code)
 * [Running Experiments](#running-experiments)
 * [Pretraining Corpus](#pretraining-corpus)
-* [IGLUE](#iglue)
+* [IndicGLUE](#iglue)
 * [Additional Evaluation Tasks](#additional-evaluation-tasks)
 * [Evaluation Results](#evaluation-results)
 * [Downloads](#downloads)
@@ -104,7 +104,7 @@ We pre-trained indic-bert on AI4Bharat's monolingual corpus. The corpus has the 
 
 
 
-### IGLUE
+### IndicGLUE
 
 IGLUE is a natural language understanding benchmark for Indian languages that we propose. While building this benchmark, our objective was also to cover most of the 11 Indian languages for each task. It consists of the following tasks:
 
@@ -233,14 +233,44 @@ In the health sector the nation has now moved ahead from the conventional approa
 ### Evaluation Results
 
 
+##### IndicGLUE
+
+Task | mBERT | XLM-R | IndicBERT
+-----| ----- | ----- | ------ 
+News Article Headline Prediction | 89.58 | 95.52 | **95.87** 
+Wikipedia Section Title Prediction| **73.66** | 66.33 | 73.31 
+Cloze-style multiple-choice QA | 39.16 | 27.98 | **41.87** 
+Article Genre Classification | 90.63 | 97.03 | **97.34** 
+Named Entity Recognition (F1-score) | **73.24** | 65.93 | 64.47 
+Cross-Lingual Sentence Retrieval Task | 21.46 | 13.74 | **27.12** 
+Average | 64.62 | 61.09 | **66.66** 
+
+##### Additional Tasks
+
+
+Task | Task Type | mBERT | XLM-R | IndicBERT 
+-----| ----- | ----- | ------ | ----- 
+BBC News Classification | Genre Classification | 60.55 | **75.52** | 74.60 
+IIT Product Reviews | Sentiment Analysis | 74.57 | **78.97** | 71.32 
+IITP Movie Reviews | Sentiment Analaysis | 56.77 | **61.61** | 59.03 
+Soham News Article | Genre Classification | 80.23 | **87.6** | 78.45 
+Midas Discourse | Discourse Analysis | 71.20 | **79.94** | 78.44 
+iNLTK Headlines Classification | Genre Classification | 87.95 | 93.38 | **94.52** 
+ACTSA Sentiment Analysis | Sentiment Analysis | 48.53 | 59.33 | **61.18** 
+Winograd NLI | Natural Language Inference | 56.34 | 55.87 | **56.34** 
+Choice of Plausible Alternative (COPA) | Natural Language Inference | 54.92 | 51.13 | **58.33** 
+Amrita Exact Paraphrase | Paraphrase Detection | **93.81** | 93.02 | 93.75 
+Amrita Rough Paraphrase | Paraphrase Detection | 83.38 | 82.20 | **84.33** 
+Average |  |  69.84 | **74.42** | 73.66 
+
+
+\* Note: all models have been restricted to a max_seq_length of 128.
 
 
 
+### Download Model
 
-
-### Downloads
-
-
+The model can be downloaded [here](https://storage.googleapis.com/ai4bharat-public-indic-nlp-corpora/models/indic-bert-v1.tar.gz). Both tf checkpoints and pytorch binaries are included in the archive. Alternatively, you can also download it from [Huggingface](https://huggingface.co/ai4bharat/indic-bert).
 
 
 
