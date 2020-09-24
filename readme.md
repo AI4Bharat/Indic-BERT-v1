@@ -80,13 +80,13 @@ sudo python3 pytorch-xla-env-setup.py --version nightly --apt-packages libomp5 l
 To get help, simply run:
 
 ```bash
-python3 scripts/evaluate.py --help
+python3 -m fine_tune.cli --help
 ```
 
 To evaluate a specific model with default hyper-parameters, execute:
 
 ```bash
-python3 scripts/evaluate.py --model <model name> --dataset <dataset name> --lang <iso lang code> --igluedir <base path to indic glue dir>
+python3 -m fine_tune.cli --model <model name> --dataset <dataset name> --lang <iso lang code> --iglue_dir <base path to indic glue dir> --outputs <output_dir>
 ```
 
 
