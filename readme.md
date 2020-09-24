@@ -268,7 +268,7 @@ Average |  |  69.84 | **74.42** | 73.66
 
 
 
-### Download Model
+### Downloads
 
 The model can be downloaded [here](https://storage.googleapis.com/ai4bharat-public-indic-nlp-corpora/models/indic-bert-v1.tar.gz). Both tf checkpoints and pytorch binaries are included in the archive. Alternatively, you can also download it from [Huggingface](https://huggingface.co/ai4bharat/indic-bert).
 
