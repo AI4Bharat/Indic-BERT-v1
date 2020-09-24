@@ -1,8 +1,8 @@
 <div align="center">
     <h1><b><i>Indic BERT</i></b></h1>
   <a href="http://indicnlp.ai4bharat.org">Website</a> |
-  <a href="#">Downloads</a> |
-    <a href="#">Paper</a><br>
+  <a href="#downloads">Downloads</a> |
+    <a href="https://indicnlp.ai4bharat.org/papers/arxiv2020_indicnlp_corpus.pdf">Paper</a><br>
     <a href="https://huggingface.co/ai4bharat/indic-bert"><img alt="Doc" src="https://img.shields.io/static/v1?url=https%3A%2F%2Fhuggingface.co%2Fai4bharat%2Findic-bert&label=Huggingface&color=green&message=indic-bert&logo=huggingface"></a>
   <br><br>
 </div>
@@ -80,13 +80,13 @@ sudo python3 pytorch-xla-env-setup.py --version nightly --apt-packages libomp5 l
 To get help, simply run:
 
 ```bash
-python3 scripts/run_tasks.py --help
+python3 scripts/evaluate.py --help
 ```
 
-To evaluate a specific model, execute:
+To evaluate a specific model with default hyper-parameters, execute:
 
 ```bash
-python3 scripts/run_tasks.py --model <model name> --tasks <comma-separated list of tasks> --langs <comma-separated list of languages>
+python3 scripts/evaluate.py --model <model name> --dataset <dataset name> --lang <iso lang code> --igluedir <base path to indic glue dir>
 ```
 
 
@@ -285,7 +285,7 @@ If you are using any of the resources, please cite the following article:
     year={2020},
     booktitle={Findings of EMNLP},
 }
-``` 
+```
 
 We would like to hear from you if:
 

@@ -414,7 +414,7 @@ def create_trainer(model, hparams):
     set_seed(hparams)
 
     if os.path.exists(hparams['output_dir']) and os.listdir(hparams['output_dir']) and hparams['do_train']:
-       raise ValueError('Output directory ({}) already exists and is not empty.'.format(args.output_dir))
+       raise ValueError('Output directory ({}) already exists and is not empty.'.format(hparams['output_dir']))
 
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         filepath=hparams['output_dir'], prefix='checkpoint', monitor='val_loss', mode='min', save_top_k=5

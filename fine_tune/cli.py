@@ -5,57 +5,50 @@ import sys
 from .modules import get_modules
 
 
-ALL_TASKS = {
-    'agc': ['text_classification', 'indicnlp-articles', 'indicnlp-articles', True],
-    'ner': ['token_classification', 'wikiann-ner', 'wikiann-ner', True],
-    'mep': ['masked_lm', 'wiki-cloze', 'wiki-cloze', False],
-    'wstp': ['multiple_choice', 'wiki-section-titles', 'wiki-section-titles', True],
-    'hp': ['multiple_choice', 'indicnlp-articles-headlines', 'indicnlp-articles', True],
-    'xsr': ['XSR', 'xsent_retrieval', 'mann-ki-baat', 'cvit-mkb', False],
-    'tydi': ['question_answering', 'tydi', 'tydi', True],
-    'bbc-news-classification': ['text_classification', 'bbc-news', 'bbc-articles', True],
-    'iitp-movie-sentiment': ['text_classification', 'iitp-movies', 'iitp-movie-reviews', True],
-    'iitp-product-sentiment': ['text_classification', 'iitp-products', 'iitp-product-reviews', True],
-    'soham-article-classification': ['text_classification', 'soham-articles', 'soham-articles', True],
-    'inltk-headline-classification': ['text_classification', 'inltk-headlines', 'inltk-headlines', True],
-    'actsa-sentiment': ['text_classification', 'actsa', 'actsa', True],
-    'midas-discourse': ['text_classification', 'midas-discourse', 'midas-discourse', True],
-    'wnli': ['text_classification', 'wnli', 'wnli-translated', True],
-    'copa': ['multiple_choice', 'copa', 'copa-translated', True],
-    'paraphrase-exact': ['text_classification', 'amrita-paraphrase-exact', 'amrita-paraphrase-exact', True],
-    'paraphrase-fuzzy': ['text_classification', 'amrita-paraphrase-fuzzy', 'amrita-paraphrase-fuzzy', True],
+# For every dataset, add an entry:
+#   [<transformer module>, <do train?>]
+ALL_DATASETS = {
+    'indicnlp-articles': ['text_classification', True],
+    'wikiann-ner': ['token_classification', True],
+    'wiki-cloze': ['masked_lm', 'wiki-cloze', False],
+    'wiki-section-titles': ['multiple_choice', 'wiki-section-titles', True],
+    'indicnlp-articles-headlines': ['multiple_choice', True],
+    'cvit-mkb': ['xsent_retrieval', False],
+    'bbc-articles': ['text_classification', True],
+    'iitp-movie-reviews': ['text_classification', True],
+    'iitp-product-reviews': ['text_classification', True],
+    'soham-articles': ['text_classification', True],
+    'inltk-headlines': ['text_classification', True],
+    'actsa': ['text_classification', True],
+    'midas-discourse': ['text_classification', True],
+    'wnli-translated': ['text_classification', True],
+    'copa-translated': ['multiple_choice', True],
+    'amrita-paraphrase-exact': ['text_classification', True],
+    'amrtia-paraphrase-fuzzy': ['text_classification', True],
 }
 
 
 def add_generic_args(parser, root_dir):
     # task-specific args START
     parser.add_argument(
-        '--task',
+        '--dataset',
         type=str,
         required=True,
-        help='The transformer module to use to solve the task'
+        help='The evaluation dataset to use'
     )
 
     parser.add_argument(
-        '--train_lang',
+        '--lang',
         default=None,
         type=str,
         required=True,
         help='ISO code of train language',
     )
-
-    parser.add_argument(
-        '--test_lang',
-        default=None,
-        type=str,
-        required=True,
-        help='ISO code of test language',
-    )
     # task-specific args END
 
     # model structural parameters START
     parser.add_argument(
-        '--model_name_or_path',
+        '--model',
         default=None,
         type=str,
         required=True,
@@ -84,7 +77,7 @@ def add_generic_args(parser, root_dir):
 
     # data I/O args START
     parser.add_argument(
-        '--data_dir',
+        '--iglue_dir',
         default=None,
         type=str,
         required=True,
@@ -159,28 +152,33 @@ def main(argvec=None):
     args = parser.parse_args(argvec)
     hparams = vars(args)
 
-    task = hparams['task']
-    train_lang = hparams['train_lang']
-    test_lang = hparams['test_lang']
-    model = hparams['model_name_or_path']
+    # high-level command line parameters
+    dataset = hparams['dataset']
+    train_lang = hparams['lang']
+    test_lang = hparams['lang']
+    model = hparams['model']
+    iglue_dir = hparams['iglue_dir']
 
-    data_dir = os.path.join(hparams['data_dir'], ALL_TASKS[task][2])
-    output_dir = os.path.join(hparams['output_dir'], task,\
-                    '{}-{}'.format(train_lang, test_lang), 'model-{}'.format(model))
+    data_dir = os.path.join(iglue_dir, dataset)
+    output_dir = os.path.join(hparams['output_dir'], dataset,
+                              '{}-{}'.format(train_lang, test_lang),
+                              'model-{}'.format(model.replace('/', '-')))
 
+    hparams['model_name_or_path'] = hparams['model']
+    hparams['train_lang'] = train_lang
+    hparams['test_lang'] = test_lang
     hparams['data_dir'] = data_dir
     hparams['output_dir'] = output_dir
-    hparams['dataset'] = ALL_TASKS[task][1]
-    hparams['do_train'] = ALL_TASKS[task][3]
+    hparams['do_train'] = ALL_DATASETS[dataset][1]
     hparams['do_predict'] = True
-    
-    if task not in ALL_TASKS:
-        print('Invalid task')
+
+    if dataset not in ALL_DATASETS:
+        print('Unrecognized dataset')
         sys.exit()
 
     os.makedirs(output_dir, exist_ok=True)
 
-    module_name = ALL_TASKS[task][0]
+    module_name = ALL_DATASETS[dataset][0]
     module_class = get_modules(module_name)
     module = module_class(hparams)
     module.run_module()
