@@ -3,20 +3,21 @@ from .processors import *
 
 
 PROCESSORS_TABLE = {
-    'indicnlp-headlines': IndicNLPHeadlines,
+    'indicnlp-articles-headlines': IndicNLPHeadlines,
     'wiki-cloze': WikiCloze,
-    'indicnlp-genre': IndicNLPGenre,
+    'indicnlp-articles': IndicNLPGenre,
     'wikiann-ner': WikiNER,
     'wiki-section-titles': WikiSectionTitles,
+    'cvit-mkb': ManKiBaat,
     'actsa': ACTSA,
-    'bbc-news': BBCNews,
-    'iitp-movies': IITPMovies,
-    'iitp-products': IITProducts,
+    'bbc-articles': BBCNews,
+    'iitp-movie-reviews': IITPMovies,
+    'iitp-product-reviews': IITProducts,
     'inltk-headlines': INLTKHeadlines,
     'soham-articles': SohamArticles,
     'midas-discourse': MidasDiscourse,
-    'wnli': WNLI,
-    'copa': COPA,
+    'wnli-translated': WNLI,
+    'copa-translated': COPA,
     'amrita-paraphrase-exact': AmritaParaphraseExact,
     'amrita-paraphrase-fuzzy': AmritaParaphraseFuzzy
 }
