@@ -86,7 +86,7 @@ python3 -m fine_tune.cli --help
 To evaluate a specific model with default hyper-parameters, execute:
 
 ```bash
-python3 -m fine_tune.cli --model <model name> --dataset <dataset name> --lang <iso lang code> --iglue_dir <base path to indic glue dir> --outputs <output_dir>
+python3 -m fine_tune.cli --model <model name> --dataset <dataset name> --lang <iso lang code> --iglue_dir <base path to indic glue dir> --output_dir <output dir>
 ```
 
 
