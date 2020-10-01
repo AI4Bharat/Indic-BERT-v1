@@ -222,13 +222,13 @@ class WikiNER(DataProcessor):
                 else:
                     # Examples could have no label for mode = 'test'
                     labels.append('O')
-        if words:
-            example = TokensExample(
-                guid=f'{mode}-{guid_index}',
-                words=words,
-                labels=labels
-            )
-            examples.append(example)
+            if words:
+                example = TokensExample(
+                    guid=f'{mode}-{guid_index}',
+                    words=words,
+                    labels=labels
+                )
+                examples.append(example)
         return examples
 
     def get_labels(self, lang):
