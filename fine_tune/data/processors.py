@@ -196,7 +196,7 @@ class WikiNER(DataProcessor):
 
     def get_examples(self, lang, mode):
         mode = 'valid' if mode == 'dev' else mode
-        file_path = os.path.join(self.data_dir, lang, f'{lang}-{mode}.txt')
+        file_path = os.path.join(self.data_dir, lang, f'{mode}.txt')
         guid_index = 1
         examples = []
         with open(file_path, encoding='utf-8') as f:
