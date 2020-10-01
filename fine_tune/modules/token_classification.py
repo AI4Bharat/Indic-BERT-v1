@@ -2,6 +2,7 @@ import argparse
 import glob
 import logging
 import os
+import subprocess
 
 import numpy as np
 import torch
@@ -22,6 +23,12 @@ class TokenClassification(BaseModule):
 
     def __init__(self, hyparams):
         self.pad_token_label_id = CrossEntropyLoss().ignore_index
+
+        script_path = os.path.join(os.path.dirname(__file__), '../..', 'scripts/ner_preprocess.sh')
+        cmd = f"bash {script_path} {hyparams['data_dir']} {hyparams['train_lang']} "\
+              f"{hyparams['test_lang']} {hyparams['model_name_or_path']} {hyparams['max_seq_length']}"
+        subprocess.call(cmd, shell=True)
+        
         super().__init__(hyparams)
 
     def _eval_end(self, outputs):
