@@ -210,18 +210,18 @@ class WikiNER(DataProcessor):
                             words=words,
                             labels=labels
                         )
-                        examples.append(TokensExample)
+                        examples.append(example)
                     guid_index += 1
                     words = []
                     labels = []
-            else:
-                splits = line.split(' ')
-                words.append(splits[0])
-                if len(splits) > 1:
-                    labels.append(splits[-1].replace('\n', ''))
                 else:
-                    # Examples could have no label for mode = 'test'
-                    labels.append('O')
+                    splits = line.split(' ')
+                    words.append(splits[0])
+                    if len(splits) > 1:
+                        labels.append(splits[-1].replace('\n', ''))
+                    else:
+                        # Examples could have no label for mode = 'test'
+                        labels.append('O')
             if words:
                 example = TokensExample(
                     guid=f'{mode}-{guid_index}',
