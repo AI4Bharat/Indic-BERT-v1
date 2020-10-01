@@ -10,8 +10,8 @@ from .modules import get_modules
 ALL_DATASETS = {
     'indicnlp-articles': ['text_classification', True],
     'wikiann-ner': ['token_classification', True],
-    'wiki-cloze': ['masked_lm', 'wiki-cloze', False],
-    'wiki-section-titles': ['multiple_choice', 'wiki-section-titles', True],
+    'wiki-cloze': ['masked_lm', False],
+    'wiki-section-titles': ['multiple_choice', True],
     'indicnlp-articles-headlines': ['multiple_choice', True],
     'cvit-mkb': ['xsent_retrieval', False],
     'bbc-articles': ['text_classification', True],
