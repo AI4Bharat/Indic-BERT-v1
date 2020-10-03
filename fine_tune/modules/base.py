@@ -365,12 +365,12 @@ class BaseModule(pl.LightningModule):
 
         if self.hparams['do_train']:
             trainer.fit(self)
+            checkpoints = list(sorted(glob.glob(os.path.join(self.hparams['output_dir'], 'checkpointepoch=*.ckpt'), recursive=True)))
+            self.trained_model = self.load_from_checkpoint(checkpoints[-1])
 
         # Optionally, predict on dev set and write to output_dir
         if self.hparams['do_predict']:
-            checkpoints = list(sorted(glob.glob(os.path.join(self.hparams['output_dir'], 'checkpointepoch=*.ckpt'), recursive=True)))
-            model = self.load_from_checkpoint(checkpoints[-1])
-        trainer.test(model)
+            trainer.test(self.trained_model)
 
 
 # Fixes __temp_weight_ddp_end.ckpt bug
