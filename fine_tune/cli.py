@@ -183,6 +183,8 @@ def main(argvec=None):
     module = module_class(hparams)
     module.run_module()
 
+    return module
+
 
 if __name__ == '__main__':
     main()
