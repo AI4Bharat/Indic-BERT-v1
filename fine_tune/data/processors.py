@@ -285,7 +285,7 @@ class WikiSectionTitles(DataProcessor):
         return examples
 
 
-class ManKiBaat:
+class ManKiBaat(DataProcessor):
     """Processor for Man ki Baat dataset"""
 
     def __init__(self, data_dir):
@@ -323,6 +323,10 @@ class ManKiBaat:
             )
             examples.append(example)
         return examples
+
+    def get_labels(self, lang):
+        # return dummy value
+        return list(range(3))
 
 
 class ACTSA(IndicNLPGenre):
