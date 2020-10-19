@@ -1,13 +1,9 @@
 """
 """
-import argparse
-import glob
 import logging
+import json
 import os
-import time
 import pickle
-import threading
-import sys
 import scipy.spatial as sp
 from filelock import FileLock
 
@@ -43,7 +39,7 @@ class XSentRetrieval(BaseModule):
         test_features = self.load_features('en')
         dataloader = self.make_loader(test_features, self.params.eval_batch_size)
         return dataloader
-    
+
     def test_dataloader_in(self):
         test_features = self.load_features('in')
         dataloader = self.make_loader(test_features, self.params.eval_batch_size)
@@ -82,7 +78,7 @@ class XSentRetrieval(BaseModule):
         self.eval()
         self.freeze()
 
-        trainer = create_trainer(self, self.params)
+        trainer = create_trainer(self, self.hparams)
 
         trainer.test(self, self.test_dataloader_en())
         sentvecs1 = pickle.load(open(self.test_results_fpath, 'rb'))
@@ -92,10 +88,11 @@ class XSentRetrieval(BaseModule):
         sentvecs2 = pickle.load(open(self.test_results_fpath, 'rb'))
         os.remove(self.test_results_fpath)
 
-        sentvecs1 = sentvecs1[sentvecs1[:,0].argsort()]
-        sentvecs2 = sentvecs2[sentvecs2[:,0].argsort()]
+        sentvecs1 = sentvecs1[sentvecs1[:, 0].argsort()]
+        sentvecs2 = sentvecs2[sentvecs2[:, 0].argsort()]
 
-        with open(os.path.join(args.output_dir, 'test_results.txt'), 'w') as fp:
+        result_path = os.path.join(self.hparams['output_dir'], 'test_results.txt')
+        with open(result_path, 'w') as fp:
             metrics = {'test_acc': precision_at_10(sentvecs1, sentvecs2)}
             json.dump(metrics, fp)
 
