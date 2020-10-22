@@ -294,11 +294,11 @@ class ManKiBaat(DataProcessor):
     def modes(self):
         return ['en', 'in']
 
-    def get_examples(self, mode):
+    def get_examples(self, lang, mode):
         if mode == 'en':
-            return get_examples_en(lang)
+            return self.get_examples_en(lang)
         elif mode == 'in':
-            return get_examples_in(lang)
+            return self.get_examples_in(lang)
 
     def get_examples_en(self, lang):
         """Get examples of English language"""
@@ -325,8 +325,8 @@ class ManKiBaat(DataProcessor):
         return examples
 
     def get_labels(self, lang):
-        # return dummy value
-        return list(range(3))
+        # return dummy value greater than number of examples
+        return list(range(10000))
 
 
 class ACTSA(IndicNLPGenre):

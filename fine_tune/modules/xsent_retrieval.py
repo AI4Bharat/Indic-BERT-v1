@@ -37,12 +37,12 @@ class XSentRetrieval(BaseModule):
 
     def test_dataloader_en(self):
         test_features = self.load_features('en')
-        dataloader = self.make_loader(test_features, self.params.eval_batch_size)
+        dataloader = self.make_loader(test_features, self.hparams['eval_batch_size'])
         return dataloader
 
     def test_dataloader_in(self):
         test_features = self.load_features('in')
-        dataloader = self.make_loader(test_features, self.params.eval_batch_size)
+        dataloader = self.make_loader(test_features, self.hparams['eval_batch_size'])
         return dataloader
 
     def test_step(self, batch, batch_idx):

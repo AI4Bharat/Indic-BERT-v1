@@ -185,8 +185,12 @@ class BaseModule(pl.LightningModule):
 
     def load_features(self, mode):
         """Load examples and convert them into features"""
-        examples = self.dataset.get_examples(self.hparams['{}_lang'.format(mode)], mode)
-        
+        if mode in ('train', 'dev', 'test'):
+            lang = self.hparams['{}_lang'.format(mode)]
+        else:
+            lang = self.hparams['test_lang']
+        examples = self.dataset.get_examples(lang, mode)
+
         cached_features_file = self._feature_file(mode)
         if os.path.exists(cached_features_file)\
                 and not self.hparams['overwrite_cache']:
@@ -309,10 +313,14 @@ class BaseModule(pl.LightningModule):
         return self.validation_step(batch, batch_nb)
 
     def _feature_file(self, mode):
+        if mode in ('train', 'dev', 'test'):
+            lang = self.hparams['{}_lang'.format(mode)]
+        else:
+            lang = self.hparams['test_lang']
         return os.path.join(
             self.hparams['data_dir'],
             'cached_{}_{}_{}_{}'.format(
-                self.hparams['{}_lang'.format(mode)],
+                lang,
                 mode,
                 list(filter(None, self.hparams['model_name_or_path'].split('/'))).pop(),
                 str(self.hparams['max_seq_length']),
