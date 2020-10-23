@@ -89,7 +89,7 @@ To evaluate a specific model with default hyper-parameters, execute:
 python3 -m fine_tune.cli --model <model name> --dataset <dataset name> --lang <iso lang code> --iglue_dir <base path to indic glue dir> --output_dir <output dir>
 ```
 
-
+For more advanced usage of the fine-tuning code, refer [this document](https://github.com/AI4Bharat/indic-bert/blob/master/docs/advanced-usage.md).
 
 ### Pretraining Corpus
 
