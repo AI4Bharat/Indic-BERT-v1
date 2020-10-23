@@ -319,4 +319,4 @@ This work is the outcome of a volunteer effort as part of [AI4Bharat initiative]
 
 - Anoop Kunchukuttan ([anoop.kunchukuttan@gmail.com](mailto:anoop.kunchukuttan@gmail.com))
 - Mitesh Khapra ([miteshk@cse.iitm.ac.in](mailto:miteshk@cse.iitm.ac.in))
-- Pratyush Kumar ([pratyushk@cse.iitm.ac.in](mailto:pratyushk@cse.iitm.ac.in))
+- Pratyush Kumar ([pratyush@cse.iitm.ac.in](mailto:pratyush@cse.iitm.ac.in))
