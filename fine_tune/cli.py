@@ -24,7 +24,7 @@ ALL_DATASETS = {
     'wnli-translated': ['text_classification', True],
     'copa-translated': ['multiple_choice', True],
     'amrita-paraphrase-exact': ['text_classification', True],
-    'amrtia-paraphrase-fuzzy': ['text_classification', True],
+    'amrita-paraphrase-fuzzy': ['text_classification', True],
 }
 
 
