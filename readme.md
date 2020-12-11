@@ -1,15 +1,17 @@
 <div align="center">
-    <h1><b><i>Indic BERT</i></b></h1>
-  <a href="http://indicnlp.ai4bharat.org">Website</a> |
-  <a href="#downloads">Downloads</a> |
-    <a href="https://indicnlp.ai4bharat.org/papers/arxiv2020_indicnlp_corpus.pdf">Paper</a><br>
-    <a href="https://huggingface.co/ai4bharat/indic-bert"><img alt="Doc" src="https://img.shields.io/static/v1?url=https%3A%2F%2Fhuggingface.co%2Fai4bharat%2Findic-bert&label=Huggingface&color=green&message=indic-bert&logo=huggingface"></a>
+	<h1><b><i>IndicBERT</i></b></h1>
+	<a href="http://indicnlp.ai4bharat.org">Website</a> |
+	<a href="#downloads">Downloads</a> |
+	<a href="https://indicnlp.ai4bharat.org/papers/arxiv2020_indicnlp_corpus.pdf">Paper</a><br>
+    <a href="https://huggingface.co/ai4bharat/indic-bert"><img alt="Doc" src="https://img.shields.io/static/v1?url=https%3A%2F%2Fhuggingface.co%2Fai4bharat%2Findic-bert&label=Huggingface&color=green&message=indic-bert&logo=huggingface"/></a><a href=""><img src="https://img.shields.io/badge/License-MIT-yellow.svg"/></a><a href="https://github.com/AI4Bharat/indic-bert/wiki"><img src="https://img.shields.io/badge/wiki-documentation-forestgreen"/></a><a href="https://github.com/AI4Bharat/indic-bert/discussions"><img src="https://img.shields.io/badge/forum-discussions-violet"/></a><a href="https://join.slack.com/t/ai4bharatgroup/shared_invite/zt-jyu2xuoy-djIH1_NM2Gqkm42DgFRXcA"><img src="https://img.shields.io/badge/slack-chat-green.svg?logo=slack"/></a>
   <br><br>
 </div>
 
+
+
 Indic bert is a multilingual ALBERT model that exclusively covers 12 major Indian languages. It is pre-trained on our novel corpus of around 9 billion tokens and evaluated on a set of diverse tasks. Indic-bert has around 10x fewer parameters than other popular publicly available multilingual models while it also achieves a performance on-par or better than these models.
 
-We also introduce IGLUE - a set of standard evaluation tasks that can be used to measure the NLU performance of monolingual and multilingual models on Indian languages. Along with IGLUE, we also compile a list of additional evaluation tasks.  This repository contains code for running all these evaluation tasks on indic-bert and other bert-like models.
+We also introduce IndicGLUE - a set of standard evaluation tasks that can be used to measure the NLU performance of monolingual and multilingual models on Indian languages. Along with IndicGLUE, we also compile a list of additional evaluation tasks.  This repository contains code for running all these evaluation tasks on indic-bert and other bert-like models.
 
 
 
