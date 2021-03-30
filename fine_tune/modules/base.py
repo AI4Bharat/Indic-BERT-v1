@@ -372,8 +372,10 @@ class BaseModule(pl.LightningModule):
         trainer = create_trainer(self, self.hparams)
 
         if self.hparams['do_train']:
-            trainer.fit(self)
             checkpoints = list(sorted(glob.glob(os.path.join(self.hparams['output_dir'], 'checkpointepoch=*.ckpt'), recursive=True)))
+            if len(checkpoints) == 0:
+                trainer.fit(self)
+                checkpoints = list(sorted(glob.glob(os.path.join(self.hparams['output_dir'], 'checkpointepoch=*.ckpt'), recursive=True)))
             self.trained_model = self.load_from_checkpoint(checkpoints[-1])
 
         # Optionally, predict on dev set and write to output_dir
@@ -409,7 +411,9 @@ class LoggingCallback(pl.Callback):
             metrics = trainer.callback_metrics
 
             # Log and save results to file
-            output_test_results_file = os.path.join(pl_module.hparams['output_dir'], "test_results.txt")
+            output_dir = pl_module.hparams['output_dir']
+            test_lang = pl_module.hparams['test_lang']
+            output_test_results_file = os.path.join(output_dir, 'test_results_{}.txt'.format(test_lang))
             with open(output_test_results_file, "w") as writer:
                 for key in sorted(metrics):
                     if key not in ["log", "progress_bar"]:

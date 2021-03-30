@@ -42,7 +42,13 @@ def add_generic_args(parser, root_dir):
         default=None,
         type=str,
         required=True,
-        help='ISO code of train language',
+        help='ISO code of test language',
+    )
+    parser.add_argument(
+        '--train_lang',
+        default=None,
+        type=str,
+        help='ISO code of train language. If not specified, it is assumed to be the same as the test langauges',
     )
     # task-specific args END
 
@@ -154,14 +160,14 @@ def main(argvec=None):
 
     # high-level command line parameters
     dataset = hparams['dataset']
-    train_lang = hparams['lang']
+    train_lang = hparams.get('train_lang', hparams['lang'])
     test_lang = hparams['lang']
     model = hparams['model']
     iglue_dir = hparams['iglue_dir']
 
     data_dir = os.path.join(iglue_dir, dataset)
     output_dir = os.path.join(hparams['output_dir'], dataset,
-                              '{}-{}'.format(train_lang, test_lang),
+                              'train-{}'.format(train_lang),
                               'model-{}'.format(model.replace('/', '-')))
 
     hparams['model_name_or_path'] = hparams['model']
