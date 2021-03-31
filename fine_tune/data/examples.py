@@ -121,6 +121,7 @@ def convert_multiple_choice_examples_to_features(
                 text_b,
                 add_special_tokens=True,
                 max_length=max_length,
+                truncation='longest_first',
                 pad_to_max_length=True,
                 return_overflowing_tokens=True,
             )

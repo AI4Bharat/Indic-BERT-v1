@@ -47,7 +47,7 @@ scipy==1.5.2
 sentencepiece==0.1.91
 seqeval==0.0.12
 six==1.15.0
-tensorboard==2.2.0
+tensorboard
 tensorboard-plugin-wit==1.7.0
 tokenizers==0.8.1rc1
 tqdm==4.48.2

@@ -370,6 +370,7 @@ class BaseModule(pl.LightningModule):
 
     def run_module(self):
         trainer = create_trainer(self, self.hparams)
+        hparams_copy = copy.deepcopy(self.hparams)
 
         if self.hparams['do_train']:
             checkpoints = list(sorted(glob.glob(os.path.join(self.hparams['output_dir'], 'checkpointepoch=*.ckpt'), recursive=True)))
@@ -377,6 +378,7 @@ class BaseModule(pl.LightningModule):
                 trainer.fit(self)
                 checkpoints = list(sorted(glob.glob(os.path.join(self.hparams['output_dir'], 'checkpointepoch=*.ckpt'), recursive=True)))
             self.trained_model = self.load_from_checkpoint(checkpoints[-1])
+            self.trained_model.hparams = hparams_copy
 
         # Optionally, predict on dev set and write to output_dir
         if self.hparams['do_predict']:
@@ -425,8 +427,8 @@ def create_trainer(model, hparams):
     # init model
     set_seed(hparams)
 
-    if os.path.exists(hparams['output_dir']) and os.listdir(hparams['output_dir']) and hparams['do_train']:
-       raise ValueError('Output directory ({}) already exists and is not empty.'.format(hparams['output_dir']))
+    # if os.path.exists(hparams['output_dir']) and os.listdir(hparams['output_dir']) and hparams['do_train']:
+    #   raise ValueError('Output directory ({}) already exists and is not empty.'.format(hparams['output_dir']))
 
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         filepath=hparams['output_dir'], prefix='checkpoint', monitor='val_loss', mode='min', save_top_k=5
