@@ -299,19 +299,11 @@ We would like to hear from you if:
 
 ### License
 
-The IndicBERT code (and models) are released under the MIT License.
+The IndicTrans code (and models) are released under the MIT License.
 
 ### Contributors
 
-- Divyanshu Kakwani
-- Anoop Kunchukuttan
-- Gokul NC
-- Satish Golla
-- Avik Bhattacharyya
-- Mitesh Khapra
-- Pratyush Kumar
-
-This work is the outcome of a volunteer effort as part of [AI4Bharat initiative](https://ai4bharat.org).
+<update this>
 
 
 
