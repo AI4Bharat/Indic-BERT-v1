@@ -44,7 +44,7 @@ class MaskedLM(BaseModule):
     def convert_examples_to_features(self, examples):
 
         batch_encoding = self.tokenizer(
-            [(example.question, None) for example in examples],
+            [example.questionfor example in examples],
             max_length=self.hparams['max_seq_length'],
             padding='max_length',
             truncation=True,

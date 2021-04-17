@@ -88,8 +88,8 @@ class XSentRetrieval(BaseModule):
         sentvecs2 = pickle.load(open(self.test_results_fpath, 'rb'))
         os.remove(self.test_results_fpath)
 
-        sentvecs1 = sentvecs1[sentvecs1[:, 0].argsort()]
-        sentvecs2 = sentvecs2[sentvecs2[:, 0].argsort()]
+        sentvecs1 = sentvecs1[sentvecs1[:, 0].argsort()][:, 1:]
+        sentvecs2 = sentvecs2[sentvecs2[:, 0].argsort()][:, 1:]
 
         result_path = os.path.join(self.hparams['output_dir'], 'test_results.txt')
         with open(result_path, 'w') as fp:

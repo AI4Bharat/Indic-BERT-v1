@@ -49,9 +49,9 @@ seqeval==0.0.12
 six==1.15.0
 tensorboard
 tensorboard-plugin-wit==1.7.0
-tokenizers==0.8.1rc1
+tokenizers==0.10.2
 tqdm==4.48.2
-transformers==3.0.2
+transformers==4.5.0
 typing-extensions==3.7.4.3
 uritemplate==3.0.1
 urllib3==1.25.10

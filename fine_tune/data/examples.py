@@ -4,7 +4,6 @@ import logging
 from dataclasses import dataclass
 from typing import Optional, List, Any
 from transformers import PreTrainedTokenizer
-from transformers import glue_convert_examples_to_features as convert_text_examples_to_features
 
 
 logger = logging.getLogger(__name__)
@@ -286,4 +285,44 @@ def convert_tokens_examples_to_features(
                 input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids, label=label_ids
             )
         )
+    return features
+
+
+def convert_text_examples_to_features(
+    examples: List[TextExample],
+    tokenizer: PreTrainedTokenizer,
+    max_length: Optional[int] = None,
+    label_list=None,
+    output_mode=None,
+):
+    if max_length is None:
+        max_length = tokenizer.model_max_length
+
+    label_map = {label: i for i, label in enumerate(label_list)}
+
+    def label_from_example(example: InputExample) -> Union[int, float, None]:
+        if example.label is None:
+            return None
+        if output_mode == "classification":
+            return label_map[example.label]
+        elif output_mode == "regression":
+            return float(example.label)
+        raise KeyError(output_mode)
+
+    labels = [label_from_example(example) for example in examples]
+
+    batch_encoding = tokenizer(
+        [(example.text_a,) if example.text_b is None else (example.text_a, example.text_b) for example in examples],
+        max_length=max_length,
+        padding="max_length",
+        truncation=True,
+    )
+
+    features = []
+    for i in range(len(examples)):
+        inputs = {k: batch_encoding[k][i] for k in batch_encoding}
+
+        feature = InputFeatures(**inputs, label=labels[i])
+        features.append(feature)
+
     return features
