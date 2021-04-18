@@ -312,7 +312,7 @@ def convert_text_examples_to_features(
     labels = [label_from_example(example) for example in examples]
 
     batch_encoding = tokenizer(
-        [(example.text_a,) if example.text_b is None else (example.text_a, example.text_b) for example in examples],
+        [example.text_a if example.text_b is None else (example.text_a, example.text_b) for example in examples],
         max_length=max_length,
         padding="max_length",
         truncation=True,
