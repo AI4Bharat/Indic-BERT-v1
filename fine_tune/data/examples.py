@@ -2,7 +2,7 @@ import tqdm
 import logging
 
 from dataclasses import dataclass
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Union
 from transformers import PreTrainedTokenizer
 
 
@@ -115,14 +115,13 @@ def convert_multiple_choice_examples_to_features(
             else:
                 text_b = example.question + " " + ending
 
-            inputs = tokenizer.encode_plus(
+            inputs = tokenizer(
                 text_a,
                 text_b,
                 add_special_tokens=True,
                 max_length=max_length,
                 truncation='longest_first',
                 pad_to_max_length=True,
-                return_overflowing_tokens=True,
             )
             if "num_truncated_tokens" in inputs and inputs["num_truncated_tokens"] > 0:
                 logger.info(
@@ -300,7 +299,7 @@ def convert_text_examples_to_features(
 
     label_map = {label: i for i, label in enumerate(label_list)}
 
-    def label_from_example(example: InputExample) -> Union[int, float, None]:
+    def label_from_example(example: TextExample) -> Union[int, float, None]:
         if example.label is None:
             return None
         if output_mode == "classification":
