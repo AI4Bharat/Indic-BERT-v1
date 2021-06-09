@@ -45,8 +45,10 @@ from transformers import AutoModel, AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained('ai4bharat/indic-bert')
 model = AutoModel.from_pretrained('ai4bharat/indic-bert')
 ```
-
-
+Note: To preserve accents while tokenization (Read this issue for more details [#26](../../issues/26) ), use this:
+```python
+tokenizer = transformers.AutoTokenizer.from_pretrained('ai4bharat/indic-bert', keep_accents=True)
+```
 
 ### Setting up the Code
 
