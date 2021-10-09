@@ -40,6 +40,9 @@ The Indic BERT model is based on the ALBERT model, a recent derivative of BERT. 
 The easiest way to use Indic BERT is through the Huggingface transformers library. It can be simply loaded like this:
 
 ```python
+# pip3 install transformers
+# pip3 install sentencepiece
+
 from transformers import AutoModel, AutoTokenizer
 
 tokenizer = AutoTokenizer.from_pretrained('ai4bharat/indic-bert')
