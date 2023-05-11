@@ -1,3 +1,7 @@
+### As of May 2023, we recommend using [IndicBERT](https://github.com/AI4Bharat/IndicBERT) Repository:
+[IndicBERT](https://github.com/AI4Bharat/IndicBERT) is the new and improved implementation of BERT supporting fine-tuning with HuggingFace.
+All the download links for IndicCorpv2, IndicXTREME and various IndicBERTv2 models are available [here](https://github.com/AI4Bharat/IndicBERT).
+
 <div align="center">
 	<h1><b><i>IndicBERT</i></b></h1>
 	<a href="http://indicnlp.ai4bharat.org">Website</a> |
@@ -6,8 +10,6 @@
     <a href="https://huggingface.co/ai4bharat/indic-bert"><img alt="Doc" src="https://img.shields.io/static/v1?url=https%3A%2F%2Fhuggingface.co%2Fai4bharat%2Findic-bert&label=Huggingface&color=green&message=indic-bert&logo=huggingface"/></a>&nbsp;<a href="https://github.com/AI4Bharat/indic-bert/blob/master/LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg"/></a>&nbsp;<a href="https://github.com/AI4Bharat/indic-bert/wiki"><img src="https://img.shields.io/badge/wiki-documentation-forestgreen"/></a>&nbsp;<a href="https://github.com/AI4Bharat/indic-bert/discussions"><img src="https://img.shields.io/badge/forum-discussions-violet"/></a>&nbsp;<a href="https://join.slack.com/t/ai4bharatgroup/shared_invite/zt-jyu2xuoy-djIH1_NM2Gqkm42DgFRXcA"><img src="https://img.shields.io/badge/slack-chat-green.svg?logo=slack"/></a>
   <br><br>
 </div>
-
-
 
 
 Indic bert is a multilingual ALBERT model that exclusively covers 12 major Indian languages. It is pre-trained on our novel corpus of around 9 billion tokens and evaluated on a set of diverse tasks. Indic-bert has around 10x fewer parameters than other popular publicly available multilingual models while it also achieves a performance on-par or better than these models.
